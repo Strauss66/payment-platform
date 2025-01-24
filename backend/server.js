@@ -1,5 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
+// Load environment variables
+dotenv.config();
 const cors = require('cors');
 const sequelize = require('./config/db');
 const Student = require('./models/Student');
@@ -13,8 +15,7 @@ Payment.belongsTo(Student, { foreignKey: 'studentId' });
 sequelize.sync({ force: false }).then(() => {
     console.log('Database synced');
 });
-// Load environment variables
-dotenv.config();
+
 
 const app = express();
 const PORT = process.env.PORT || 5001;
