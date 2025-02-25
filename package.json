@@ -1,10 +1,19 @@
 {
   "dependencies": {
-    "dotenv": "^16.4.7"
+    "@headlessui/react": "^2.2.0",
+    "@heroicons/react": "^2.2.0",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "mysql2": "^3.12.0",
+    "pg": "^8.13.3",
+    "pg-hstore": "^2.3.4",
+    "react-router-dom": "^7.2.0",
+    "sequelize": "^6.37.5"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.1",
-    "tailwindcss": "^4.0.1"
+    "sequelize-cli": "^6.6.2",
+    "tailwindcss": "^4.0.8"
   }
 }
