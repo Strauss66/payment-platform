@@ -1,0 +1,54 @@
+{
+  "dependencies": {
+    "@headlessui/react": "^2.2.0",
+    "@heroicons/react": "^2.2.0",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "mysql2": "^3.12.0",
+    "pg": "^8.13.3",
+    "pg-hstore": "^2.3.4",
+    "react-router-dom": "^7.3.0",
+    "sequelize": "^6.37.5"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1",
+    "react-scripts": "^5.0.1",
+    "sequelize-cli": "^6.6.2",
+    "tailwindcss": "^4.0.8",
+    "webpack": "^5.98.0"
+  },
+  "name": "payment-platform",
+  "version": "1.0.0",
+  "main": "frontend/src/main.jsx",
+  "scripts": {
+    "dev": "react-scripts start",
+    "start": "react-scripts start",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Strauss66/payment-platform.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Strauss66/payment-platform/issues"
+  },
+  "homepage": "https://github.com/Strauss66/payment-platform#readme",
+  "description": "",
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

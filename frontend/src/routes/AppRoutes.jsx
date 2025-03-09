@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext, ROLES } from "../context/AuthContext";
+
 
 // Authentication pages
 import Login from "../pages/Auth/Login";
@@ -15,8 +16,8 @@ import Reports from "../pages/Admin/Reports";
 
 // Cashier pages
 import CashierDashboard from "../pages/Cashier/CashierDashboard";
-import ProcessPayments from "../pages/Cashier/ProcessPayments";
-import ViewTransactions from "../pages/Cashier/ViewTransactions";
+import ProcessPayments from "../pages/Cashier/ProcessPayment.jsx";
+import ViewTransactions from "../pages/Cashier/ViewTransaction.jsx";
 
 // Student/Parent pages
 import PortalDashboard from "../pages/StudentParent/PortalDashboard";
