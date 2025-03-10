@@ -1,81 +1,43 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import "mdb-react-ui-kit/dist/css/mdb.min.css";
+import { MDBBtn, MDBContainer, MDBCard, MDBCardBody, MDBCardImage, MDBRow, MDBCol, MDBInput, MDBCheckbox } from "mdb-react-ui-kit";
 
-export default function Login() {
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-
-  const handleChange = (e) => {
-    setFormData({ 
-      ...formData, 
-      [e.target.name]: e.target.value 
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await login(formData);
-      navigate("/"); // Navigate to some default or role-based route
-    } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
-    }
-  };
-
+function Login() {
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded shadow-md w-full max-w-md"
-      >
-        <h1 className="text-2xl font-bold mb-6">Login</h1>
-        {error && <div className="text-red-500 mb-4">{error}</div>}
-        <div className="mb-4">
-          <label className="block mb-2 font-medium" htmlFor="email">
-            Email
-          </label>
-          <input
-            className="w-full p-2 border border-gray-300 rounded"
-            type="email"
-            name="email"
-            id="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block mb-2 font-medium" htmlFor="password">
-            Password
-          </label>
-          <input
-            className="w-full p-2 border border-gray-300 rounded"
-            type="password"
-            name="password"
-            id="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 w-full"
-        >
-          Login
-        </button>
-        <div className="flex justify-between items-center mt-4">
-          <Link to="/register" className="text-blue-600 hover:underline">
-            Register
-          </Link>
-          <Link to="/forgot-password" className="text-blue-600 hover:underline">
-            Forgot Password?
-          </Link>
-        </div>
-      </form>
-    </div>
+    <MDBContainer className="my-5 d-flex justify-content-center">
+      <MDBCard className="shadow-lg" style={{ maxWidth: "800px" }}>
+        <MDBRow className="g-0 d-flex align-items-center">
+          {/* Left Side Image */}
+          <MDBCol md="6">
+            <MDBCardImage
+              src="https://mdbootstrap.com/img/new/ecommerce/vertical/004.jpg"
+              alt="phone"
+              className="w-100 rounded-start"
+            />
+          </MDBCol>
+
+          {/* Right Side Form */}
+          <MDBCol md="6">
+            <MDBCardBody className="p-4">
+              <h3 className="text-center mb-4">Sign In</h3>
+
+              <MDBInput className="mb-3" label="Email address" id="form1" type="email" />
+              <MDBInput className="mb-3" label="Password" id="form2" type="password" />
+
+              <div className="d-flex justify-content-between mb-3">
+                <MDBCheckbox name="flexCheck" id="flexCheckDefault" label="Remember me" />
+                <a href="#" className="text-primary">Forgot password?</a>
+              </div>
+
+              <MDBBtn className="w-100">Sign in</MDBBtn>
+            </MDBCardBody>
+          </MDBCol>
+        </MDBRow>
+      </MDBCard>
+    </MDBContainer>
   );
 }
+
+export default Login;

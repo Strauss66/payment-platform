@@ -38,15 +38,19 @@ function PrivateRoute({ children, roles = [] }) {
   const { user, loading } = useContext(AuthContext);
 
   if (loading) {
+    console.log("Auth is still loading...");
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
+  console.log("User:", user); // Debug log
+
   if (!user) {
+    console.log("Redirecting to login...");
     return <Navigate to="/login" replace />;
   }
 
   if (roles.length && !roles.includes(user.role)) {
-    // If the user role is not in the allowed roles, redirect or show "No Access"
+    
     return <div className="p-4 text-red-500">You do not have permission to view this page.</div>;
   }
 

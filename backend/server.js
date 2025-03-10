@@ -24,7 +24,6 @@ sequelize.sync({ force: false }).then(() => {
     console.log('Database synced');
 });
 
-
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -32,11 +31,19 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json());
 
-
 // Routes
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/grades', require('./routes/gradeRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
+
+// Serve React frontend in production
+if (process.env.NODE_ENV === "production") {
+    app.use(express.static(path.join(__dirname, "../frontend/build")));
+
+    app.get("*", (req, res) => {
+        res.sendFile(path.join(__dirname, "../frontend/build", "index.html"));
+    });
+}
 
 // Sync database and start server
 sequelize.sync({ force: false }).then(() => {

@@ -2,7 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom styles */
-body {
-  @apply bg-gray-100 text-gray-900;
+.rounded-custom {
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+
+@media (max-width: 550px) {
+  .rounded-custom {
+    border-top-right-radius: 0.5rem;
+    border-bottom-left-radius: 0;
+  }
 }

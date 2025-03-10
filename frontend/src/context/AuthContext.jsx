@@ -1,11 +1,11 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 import axios from "axios";
 
 // Create the context
-export const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 // Define roles for easy reference
-export const ROLES = {
+const ROLES = {
   ADMIN: "admin",
   CASHIER: "cashier",
   TEACHER: "teacher",
@@ -13,22 +13,19 @@ export const ROLES = {
 };
 
 // Provider component
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);      // store user details
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Attempt to fetch current user info on mount
     const getUserInfo = async () => {
       try {
-        // Example: Checking for a saved token in local storage
         const token = localStorage.getItem("token");
         if (!token) {
           setLoading(false);
           return;
         }
 
-        // If token exists, fetch user
         const response = await axios.get("/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -44,7 +41,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (credentials) => {
-    // Example login method
     const response = await axios.post("/api/auth/login", credentials);
     const { token, user } = response.data;
     localStorage.setItem("token", token);
@@ -56,13 +52,15 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const value = {
-    user,
-    setUser,
-    login,
-    logout,
-    loading,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, setUser, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+// Hook to use AuthContext
+const useAuth = () => useContext(AuthContext);
+
+// ✅ Export properly
+export { AuthProvider, AuthContext, useAuth, ROLES };
