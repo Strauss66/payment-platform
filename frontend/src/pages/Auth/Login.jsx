@@ -21,10 +21,31 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Trying to login with:", credentials); // Debug log
+  
     try {
       await login(credentials);
-      navigate("/admin/dashboard"); // Redirect after login (modify based on role)
+  
+      // Get the user from localStorage (since login updates localStorage)
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      if (!storedUser) {
+        throw new Error("User data not found after login.");
+      }
+  
+      console.log("Login successful, user data:", storedUser); // Debug log
+  
+      // Redirect based on role
+      const roleRedirects = {
+        admin: "/admin/dashboard",
+        cashier: "/cashier/dashboard",
+        teacher: "/teacher/dashboard",
+        student_parent: "/portal/dashboard",
+      };
+  
+      navigate(roleRedirects[storedUser.role] || "/login");
+  
     } catch (err) {
+      console.error("Login error:", err.message);
       setError("Invalid email or password");
     }
   };

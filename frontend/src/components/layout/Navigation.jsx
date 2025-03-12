@@ -1,57 +1,30 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
-import { useAuth, ROLES } from "../../context/AuthContext"; // ✅ Import correctly
+import { AuthContext, ROLES } from "../../context/AuthContext";
 
-export default function Navigation() {
-  const { user, logout } = useAuth(); // ✅ Use `useAuth()` instead of raw `AuthContext`
-
-  if (!user) {
-    return null;
-  }
+const Navigation = () => {
+  const { user, logout } = useContext(AuthContext);
 
   return (
-    <nav className="bg-white shadow-md px-4 py-2 flex justify-between items-center">
-      <div className="text-xl font-bold">
-        <Link to="/">School Payment Platform</Link>
+    <nav className="bg-blue-600 p-4 text-white">
+      <div className="container mx-auto flex justify-between">
+        <Link to="/" className="font-bold text-lg">School Payments</Link>
+        <div>
+          {user ? (
+            <>
+              {user.role === ROLES.ADMIN && <Link to="/admin/dashboard" className="mr-4">Admin</Link>}
+              {user.role === ROLES.CASHIER && <Link to="/cashier/dashboard" className="mr-4">Cashier</Link>}
+              {user.role === ROLES.TEACHER && <Link to="/teacher/dashboard" className="mr-4">Teacher</Link>}
+              {user.role === ROLES.STUDENT_PARENT && <Link to="/portal/dashboard" className="mr-4">Portal</Link>}
+              <button onClick={logout} className="ml-4">Logout</button>
+            </>
+          ) : (
+            <Link to="/login">Login</Link>
+          )}
+        </div>
       </div>
-      <ul className="flex space-x-4">
-        {user.role === ROLES.ADMIN && (
-          <>
-            <li><Link to="/admin/dashboard">Admin Dashboard</Link></li>
-            <li><Link to="/admin/manage-users">Manage Users</Link></li>
-            <li><Link to="/admin/payments">Payments</Link></li>
-            <li><Link to="/admin/reports">Reports</Link></li>
-          </>
-        )}
-        {user.role === ROLES.CASHIER && (
-          <>
-            <li><Link to="/cashier/dashboard">Cashier Dashboard</Link></li>
-            <li><Link to="/cashier/process-payments">Process Payments</Link></li>
-            <li><Link to="/cashier/view-transactions">View Transactions</Link></li>
-          </>
-        )}
-        {user.role === ROLES.STUDENT_PARENT && (
-          <>
-            <li><Link to="/portal/dashboard">Portal</Link></li>
-            <li><Link to="/portal/view-fees">View Fees</Link></li>
-            <li><Link to="/portal/make-payment">Make Payment</Link></li>
-            <li><Link to="/portal/download-invoices">Download Invoices</Link></li>
-          </>
-        )}
-        {user.role === ROLES.TEACHER && (
-          <>
-            <li><Link to="/teacher/dashboard">Teacher Dashboard</Link></li>
-            <li><Link to="/teacher/enter-grades">Enter Grades</Link></li>
-            <li><Link to="/teacher/view-attendance">View Attendance</Link></li>
-          </>
-        )}
-      </ul>
-      <button
-        onClick={logout}
-        className="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 text-sm"
-      >
-        Logout
-      </button>
     </nav>
   );
-}
+};
+
+export default Navigation;
