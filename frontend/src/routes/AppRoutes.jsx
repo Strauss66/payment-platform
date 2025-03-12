@@ -33,6 +33,18 @@ import ViewAttendance from "../pages/Teacher/ViewAttendance";
 // Layout
 import Navigation from "../components/layout/Navigation";
 
+import ViewInvoices from "../pages/StudentParent/DownloadInvoices";
+
+// Student/Parent Routes
+<Route
+  path="/portal/download-invoices"
+  element={
+    <PrivateRoute roles={[ROLES.STUDENT_PARENT]}>
+      <ViewInvoices />
+    </PrivateRoute>
+  }
+/>
+
 // Higher Order Component to protect routes
 function PrivateRoute({ children, roles = [] }) {
   const { user, loading } = useContext(AuthContext);
