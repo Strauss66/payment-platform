@@ -15,16 +15,12 @@ export default function PortalDashboard() {
         <Card title="Upcoming Due Dates" content="3" />
         <Card title="Last Payment" content="$200 on 03/05/2025" />
         <Card title="Latest Grades" content="A, B, A-" />
-        <Card title="Total Invoices" content="2" />
 
         {/* Clickable Card for Viewing Invoices */}
         <div onClick={() => navigate("/portal/download-invoices")} className="cursor-pointer">
           <Card title="Total Invoices" content="2" />
         </div>
       </div>
-
-      {/* Example Button */}
-      <Button label="Click Me" onClick={() => alert("Button Clicked!")} />
     </div>
   );
 }

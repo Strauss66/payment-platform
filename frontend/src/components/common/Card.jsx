@@ -1,10 +1,15 @@
 import React from "react";
 
-export default function Card({ title, content }) {
+export default function Card({ title, content, style, onMouseEnter, onMouseLeave }) {
   return (
-    <div className="bg-white p-6 shadow-lg rounded-lg border border-gray-200">
-      <h3 className="font-bold text-xl mb-2 text-gray-800">{title}</h3>
-      <p className="text-gray-600">{content}</p>
+    <div 
+      className="p-4 border rounded shadow-md transition duration-300 ease-in-out"
+      style={style}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <h2 className="text-xl font-bold mb-2">{title}</h2>
+      <p>{content}</p>
     </div>
   );
 }

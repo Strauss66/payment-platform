@@ -1,80 +1,56 @@
-import React, { useState, useEffect } from "react";
-import { DownloadInvoiceButton } from "../../components/invoices/InvoicePDF";
+import React, { useState } from "react";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import InvoicePDF from "../../components/InvoicePDF.jsx"; // We'll create this next
 
-const ViewInvoices = () => {
-  const [invoices, setInvoices] = useState([]);
+export default function DownloadInvoices() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
-  // Fetch invoices (simulated API response)
-  useEffect(() => {
-    setInvoices([
-      {
-        invoiceNumber: "INV-001",
-        date: "2025-03-10",
-        studentName: "John Doe",
-        studentId: "12345",
-        grade: "10th",
-        items: [
-          { description: "Tuition Fee - March", amount: 500 },
-          { description: "Library Fee", amount: 50 },
-        ],
-        totalAmount: 550,
-      },
-      {
-        invoiceNumber: "INV-002",
-        date: "2025-02-10",
-        studentName: "John Doe",
-        studentId: "12345",
-        grade: "10th",
-        items: [{ description: "Tuition Fee - February", amount: 500 }],
-        totalAmount: 500,
-      },
-    ]);
-  }, []);
+  // Dummy invoice data (Replace this with API data)
+  const invoices = [
+    { id: 1, student: "John Doe", amount: "$500", date: "03/10/2025" },
+    { id: 2, student: "Jane Smith", amount: "$300", date: "02/15/2025" },
+  ];
 
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-4">Download Invoices</h1>
 
-      {invoices.length === 0 ? (
-        <p>No invoices available.</p>
-      ) : (
-        <table className="table-auto w-full border-collapse border border-gray-200">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2">Select</th>
-              <th className="border p-2">Invoice #</th>
-              <th className="border p-2">Date</th>
-              <th className="border p-2">Total Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoices.map((invoice) => (
-              <tr key={invoice.invoiceNumber} className="border">
-                <td className="border p-2 text-center">
-                  <input
-                    type="radio"
-                    name="selectedInvoice"
-                    onChange={() => setSelectedInvoice(invoice)}
-                  />
-                </td>
-                <td className="border p-2">{invoice.invoiceNumber}</td>
-                <td className="border p-2">{invoice.date}</td>
-                <td className="border p-2">${invoice.totalAmount}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="space-y-4">
+        {invoices.map((invoice) => (
+          <div
+            key={invoice.id}
+            onClick={() => {
+              console.log("Selected Invoice:", invoice); // Debugging
+              setSelectedInvoice(invoice);
+            }}
+            className={`p-4 border rounded-lg cursor-pointer ${selectedInvoice?.id === invoice.id ? "bg-gray-200" : "hover:bg-gray-100"
+              }`}
+          >
+            <h3 className="text-lg font-semibold">Invoice #{invoice.id}</h3>
+            <p>Student: {invoice.student}</p>
+            <p>Amount: {invoice.amount}</p>
+            <p>Date: {invoice.date}</p>
+          </div>
+        ))}
+      </div>
 
-      {/* Download Selected Invoice Button */}
+      {/* Show download button only when an invoice is selected */}
       {selectedInvoice && (
-        <div className="mt-4">
-          <DownloadInvoiceButton invoice={selectedInvoice} />
+        <div className="mt-6">
+          <PDFDownloadLink
+            document={<InvoicePDF invoice={selectedInvoice} />}
+            fileName={`Invoice-${selectedInvoice.id}.pdf`}
+          >
+            {({ loading }) =>
+              loading ? (
+                <button className="bg-gray-400 text-white px-4 py-2 rounded-md">Generating PDF...</button>
+              ) : (
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-md">Download Invoice</button>
+              )
+            }
+          </PDFDownloadLink>
         </div>
       )}
     </div>
   );
-};
-
-export default ViewInvoices;
+}

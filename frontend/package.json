@@ -2,6 +2,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
+    "@react-pdf/renderer": "^4.3.0",
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
     "mdb-react-ui-kit": "^9.0.0",
