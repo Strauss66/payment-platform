@@ -13,6 +13,7 @@ import AdminDashboard from "../pages/Admin/AdminDashboard";
 import ManageUsers from "../pages/Admin/ManageUsers";
 import Payments from "../pages/Admin/Payments";
 import Reports from "../pages/Admin/Reports";
+import LateFeePayers from "../pages/Admin/LateFeePayers";
 
 // Cashier pages
 import CashierDashboard from "../pages/Cashier/CashierDashboard";
@@ -113,6 +114,14 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/admin/late-fee-payers"
+          element={
+            <PrivateRoute roles={[ROLES.ADMIN]}>
+              <LateFeePayers />
+            </PrivateRoute>
+          }
+        /> 
 
         {/* Cashier Routes */}
         <Route
@@ -203,6 +212,7 @@ export default function AppRoutes() {
         {/* Default route */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      
     </>
   );
 }
