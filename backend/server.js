@@ -3,6 +3,11 @@ const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
 const app = express();
+// Import your admin-related routes
+const calculateFeeRoutes = require("./routes/calculateFee"); // Correct
+
+// Register API routes properly
+
 
 app.use(
     cors({
@@ -40,11 +45,16 @@ const PORT = process.env.PORT || 5001;
 app.use(express.json());
 
 // Routes
+// Middleware
+app.use(express.json());
+
+// ✅ Register API routes first
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/grades', require('./routes/gradeRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/admin', require('./routes/calculateFee'));  // Correct
 
-// Serve React frontend in production
+// Serve React frontend in production (should be last)
 if (process.env.NODE_ENV === "production") {
     app.use(express.static(path.join(__dirname, "../frontend/build")));
 

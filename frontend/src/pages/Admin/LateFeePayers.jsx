@@ -9,7 +9,7 @@ export default function LateFeePayers() {
 
   useEffect(() => {
     const fetchBalances = async () => {
-      try {
+      try { 
         const token = localStorage.getItem("token");
 
         const response = await axios.get("http://localhost:5001/api/admin/all-balances", {
