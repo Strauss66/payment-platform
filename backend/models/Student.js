@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 
-// Student model definition
 const Student = sequelize.define('Student', {
     id: {
         type: DataTypes.INTEGER,
@@ -29,6 +28,8 @@ const Student = sequelize.define('Student', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+}, {
+    timestamps: true, // Enable createdAt and updatedAt
 });
 
 module.exports = Student;
