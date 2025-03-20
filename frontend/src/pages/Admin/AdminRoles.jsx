@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Table } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import AdminNav from "../Admin/AdminNav.jsx";  // Ensure path is correct
 
 export default function AdminRoles() {
@@ -23,6 +25,7 @@ export default function AdminRoles() {
             <li key={role.id} className="border-b p-2">{role.name}</li>
           ))}
         </ul>
+        <Link to="/admin/dashboard" className="btn btn-secondary mt-4">Back to Dashboard</Link>
       </div>
     </div>
   );
