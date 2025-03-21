@@ -1,32 +1,31 @@
 import React from "react";
-import Card from "../../components/common/Card";
-import { Link } from "react-router-dom";
-import AdminNav from "../Admin/AdminNav.jsx";  // Ensure path is correct
+import { useNavigate } from "react-router-dom";
 
 export default function AdminDashboard() {
-  const totalUsers = 50; // Placeholder, should be fetched from API
-  const pendingFees = 3200; // Placeholder
-  const reportsGenerated = 12; // Placeholder
+  const navigate = useNavigate();
+
+  const panels = [
+    { title: "Manage Users", link: "/admin/users", description: "View and manage all users." },
+    { title: "Manage Roles", link: "/admin/roles", description: "Assign and edit roles." },
+    { title: "Manage Permissions", link: "/admin/permissions", description: "Control user access levels." },
+    { title: "Late Fee Payers", link: "/admin/late-fee-payers", description: "Check overdue payments." },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <AdminNav />
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
-
-        {/* Dashboard Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card title="Total Users" content={totalUsers} />
-          <Card title="Pending Fees" content={`$${pendingFees}`} />
-          <Card title="Reports Generated" content={reportsGenerated} />
-        </div>
-
-        {/* View Late Payers Button */}
-        <div className="mt-6">
-          <Link to="/admin/late-fee-payers" className="btn btn-danger">
-            View Late Payers
-          </Link>
-        </div>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {panels.map((panel, index) => (
+          <div
+            key={index}
+            onClick={() => navigate(panel.link)}
+            className="cursor-pointer block bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition"
+          >
+            <h2 className="text-xl font-semibold mb-2">{panel.title}</h2>
+            <p className="text-gray-600">{panel.description}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
