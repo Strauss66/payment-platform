@@ -28,13 +28,14 @@ export default function LateFeePayers() {
     const fetchLatePayers = async () => {
       try {
         const token = localStorage.getItem("token");
-
+    
         const response = await axios.get("http://localhost:5001/api/admin/late-payers", {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        console.log("Fetched late payers:", response.data);
+    
+        console.log("Late payers response:", response.data); // Log API response
         setLatePayers(Array.isArray(response.data) ? response.data : []);
+    
       } catch (error) {
         console.error("Error fetching late payers:", error.response?.data || error.message);
         setLatePayers([]);

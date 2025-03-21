@@ -45,6 +45,15 @@ const User = sequelize.define(
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // Set to true if not all students have users
+      references: {
+          model: 'Users',
+          key: 'id',
+      },
+      onDelete: 'CASCADE',
+  },
   },
   {
     timestamps: true, // Keep timestamps enabled

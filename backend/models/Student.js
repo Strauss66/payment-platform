@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
+const User = require('./User'); // Import User model
 
 const Student = sequelize.define('Student', {
     id: {
@@ -28,8 +29,26 @@ const Student = sequelize.define('Student', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    user_id: { //Ensure `user_id` exists
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: User, // References `User` table
+            key: 'id',
+        },
+        onDelete: 'CASCADE', // If the user is deleted, the student is deleted too
+    },
+    parent_id: { // Ensure `parent_id` exists
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: User, // Assuming parents are also users
+            key: 'id',
+        },
+        onDelete: 'SET NULL',
+    }
 }, {
-    timestamps: true, // Enable createdAt and updatedAt
+    timestamps: true,
 });
 
 module.exports = Student;
