@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const Role = require("../models/role");
+const Role = require("../models/Role");
 const Permission = require("../models/permission");
 const bcrypt = require("bcrypt");
 
@@ -7,9 +7,15 @@ const bcrypt = require("bcrypt");
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.findAll({ include: Role });
-    res.json(users);
+
+    if (!Array.isArray(users)) {
+      console.error("Unexpected response from DB:", users);
+    }
+
+    res.status(200).json(users || []); // Ensure response is always an array
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching users:", error.message);
+    res.status(500).json({ error: "Failed to retrieve users", details: error.message });
   }
 };
 
@@ -18,44 +24,53 @@ const getUserById = async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id, { include: Role });
     if (!user) return res.status(404).json({ error: "User not found" });
-    res.json(user);
+    
+    res.status(200).json(user);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to retrieve user", details: error.message });
   }
 };
 
 // Create User
 const createUser = async (req, res) => {
   try {
-    const { first_name, last_name, email, username, password, role_id } = req.body;
+    const { email, username, password, role_id } = req.body;
 
-    if (!first_name || !last_name || !email || !username || !password || !role_id) {
-      return res.status(400).json({ error: "All fields are required" });
+    if (!email || !username || !password) {
+      return res.status(400).json({ error: "Email, username, and password are required" });
     }
+
+    // Check for existing user
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) return res.status(400).json({ error: "Email already in use" });
+
+    const existingUsername = await User.findOne({ where: { username } });
+    if (existingUsername) return res.status(400).json({ error: "Username already in use" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      first_name,
-      last_name,
       email,
       username,
       password: hashedPassword,
-      role_id,
+      role_id: role_id || null, // Allow users without a role
     });
 
     res.status(201).json(user);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to create user", details: error.message });
   }
 };
 
 // Update User
 const updateUser = async (req, res) => {
   try {
-    const { first_name, last_name, email, username, role_id, password } = req.body;
+    const { email, username, role_id, password } = req.body;
+    const user = await User.findByPk(req.params.id);
+    
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    const updatedFields = { first_name, last_name, email, username, role_id };
+    const updatedFields = { email, username, role_id };
 
     if (password) {
       updatedFields.password = await bcrypt.hash(password, 10);
@@ -63,9 +78,9 @@ const updateUser = async (req, res) => {
 
     await User.update(updatedFields, { where: { id: req.params.id } });
 
-    res.json({ message: "User updated successfully" });
+    res.status(200).json({ message: "User updated successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to update user", details: error.message });
   }
 };
 
@@ -73,12 +88,13 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
+    
     if (!user) return res.status(404).json({ error: "User not found" });
 
     await User.destroy({ where: { id: req.params.id } });
-    res.json({ message: "User deleted" });
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to delete user", details: error.message });
   }
 };
 
@@ -86,9 +102,9 @@ const deleteUser = async (req, res) => {
 const getAllRoles = async (req, res) => {
   try {
     const roles = await Role.findAll();
-    res.json(roles);
+    res.status(200).json(roles);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to retrieve roles", details: error.message });
   }
 };
 
@@ -101,7 +117,7 @@ const createRole = async (req, res) => {
     const role = await Role.create({ name });
     res.status(201).json(role);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to create role", details: error.message });
   }
 };
 
@@ -111,9 +127,9 @@ const updateRole = async (req, res) => {
     const { name } = req.body;
     await Role.update({ name }, { where: { id: req.params.id } });
 
-    res.json({ message: "Role updated successfully" });
+    res.status(200).json({ message: "Role updated successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to update role", details: error.message });
   }
 };
 
@@ -121,9 +137,9 @@ const updateRole = async (req, res) => {
 const deleteRole = async (req, res) => {
   try {
     await Role.destroy({ where: { id: req.params.id } });
-    res.json({ message: "Role deleted" });
+    res.status(200).json({ message: "Role deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to delete role", details: error.message });
   }
 };
 
@@ -131,9 +147,9 @@ const deleteRole = async (req, res) => {
 const getAllPermissions = async (req, res) => {
   try {
     const permissions = await Permission.findAll();
-    res.json(permissions);
+    res.status(200).json(permissions);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to retrieve permissions", details: error.message });
   }
 };
 
@@ -146,7 +162,7 @@ const createPermission = async (req, res) => {
     const permission = await Permission.create({ name, description });
     res.status(201).json(permission);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to create permission", details: error.message });
   }
 };
 
@@ -156,9 +172,9 @@ const updatePermission = async (req, res) => {
     const { name, description } = req.body;
     await Permission.update({ name, description }, { where: { id: req.params.id } });
 
-    res.json({ message: "Permission updated successfully" });
+    res.status(200).json({ message: "Permission updated successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to update permission", details: error.message });
   }
 };
 
@@ -166,9 +182,9 @@ const updatePermission = async (req, res) => {
 const deletePermission = async (req, res) => {
   try {
     await Permission.destroy({ where: { id: req.params.id } });
-    res.json({ message: "Permission deleted" });
+    res.status(200).json({ message: "Permission deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to delete permission", details: error.message });
   }
 };
 

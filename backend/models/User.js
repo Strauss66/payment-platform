@@ -1,6 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
-const Role = require("./role");
+const Role = require("./Role");
 
 const User = sequelize.define(
   "User",
@@ -28,10 +28,12 @@ const User = sequelize.define(
     role_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      defaultValue: 1, // Assign a default role ID
       references: {
         model: Role,
         key: "id",
       },
+      onDelete: "SET DEFAULT",
     },
     status: {
       type: DataTypes.ENUM("active", "inactive", "locked"),
@@ -39,28 +41,20 @@ const User = sequelize.define(
     },
     createdAt: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW, // Use current timestamp
+      defaultValue: DataTypes.NOW,
     },
     updatedAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
-    user_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true, // Set to true if not all students have users
-      references: {
-          model: 'Users',
-          key: 'id',
-      },
-      onDelete: 'CASCADE',
-  },
   },
   {
     timestamps: true, // Keep timestamps enabled
   }
 );
 
-User.belongsTo(Role, { foreignKey: "role_id" });
+// Relationships
+User.belongsTo(Role, { foreignKey: "role_id", onDelete: "SET NULL" });
 Role.hasMany(User, { foreignKey: "role_id" });
 
 module.exports = User;

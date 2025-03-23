@@ -19,20 +19,18 @@ app.use(
 
 // Middleware
 app.use(express.json());
-app.use(cors());
 
 // Import models
 const User = require("./models/User");
 const UserProfile = require("./models/UserProfile");
-const Role = require("./models/role");
+const Role = require("./models/Role");
 const Permission = require("./models/permission");
 const RolePermission = require("./models/RolePermission");
-const Student = require("./models/student");
+const Student = require("./models/Student");
 const Family = require("./models/Family");
 const Grade = require("./models/Grade");
 const Payment = require("./models/Payment");
-const adminRoutes = require("./routes/calculateFee"); // Ensure correct path
-app.use("/api/admin", adminRoutes); // Now properly registered
+
 // Define relationships
 Student.hasMany(Payment, { foreignKey: "studentId" });
 Student.belongsTo(User, { foreignKey: "user_id", as: "studentUser" }); // Define relationship with user
@@ -40,10 +38,15 @@ Student.belongsTo(User, { foreignKey: "parent_id", as: "parentUser" }); // Defin
 Payment.belongsTo(Student, { foreignKey: "studentId" });
 
 // Register API routes
+const calculateFeeRoutes = require("./routes/calculateFee");
+const adminRoutes = require("./routes/adminRoutes");
+
+app.use("/api/admin", calculateFeeRoutes); // Calculate fee routes
+app.use("/api/admin", adminRoutes); // Admin panel routes
+
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/grades", require("./routes/gradeRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
-app.use("/api/admin", require("./routes/adminRoutes")); // Correct admin panel routes
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === "production") {

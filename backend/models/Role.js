@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
+const User = require("./User"); // Import the User model
 
 const Role = sequelize.define(
   "Role",
@@ -16,6 +17,14 @@ const Role = sequelize.define(
     },
   },
   {
+    hooks: {
+      beforeDestroy: async (role) => {
+        const userCount = await User.count({ where: { role_id: role.id } });
+        if (userCount > 0) {
+          throw new Error("Cannot delete a role assigned to users.");
+        }
+      },
+    },
     timestamps: false,
   }
 );
