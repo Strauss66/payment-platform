@@ -31,6 +31,7 @@ const Family = require("./models/Family");
 const Grade = require("./models/Grade");
 const Payment = require("./models/Payment");
 
+
 // Define relationships
 Student.hasMany(Payment, { foreignKey: "studentId" });
 Student.belongsTo(User, { foreignKey: "user_id", as: "studentUser" }); // Define relationship with user
@@ -40,7 +41,9 @@ Payment.belongsTo(Student, { foreignKey: "studentId" });
 // Register API routes
 const calculateFeeRoutes = require("./routes/calculateFee");
 const adminRoutes = require("./routes/adminRoutes");
+const studentRoutes = require("./routes/studentRoutes");
 
+app.use("/api/student", studentRoutes); // Student routes
 app.use("/api/admin", calculateFeeRoutes); // Calculate fee routes
 app.use("/api/admin", adminRoutes); // Admin panel routes
 

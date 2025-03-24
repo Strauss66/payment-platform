@@ -12,13 +12,11 @@ const User = sequelize.define(
     },
     email: {
       type: DataTypes.STRING,
-      unique: true,
       allowNull: false,
       validate: { isEmail: true },
     },
     username: {
       type: DataTypes.STRING,
-      unique: true,
       allowNull: false,
     },
     password: {
@@ -50,6 +48,10 @@ const User = sequelize.define(
   },
   {
     timestamps: true, // Keep timestamps enabled
+    indexes: [
+      { unique: true, fields: ["email"] },
+      { unique: true, fields: ["username"] },
+    ],
   }
 );
 

@@ -1,10 +1,10 @@
-const express = require('express');
-const { getStudents, addStudent } = require('../controllers/studentController');
+const express = require("express");
+const { getStudents, addStudent, getStudentBalance } = require("../controllers/studentController"); // ✅ Import `getStudentBalance`
 const router = express.Router();
 
-router.get('/', getStudents);
-router.post('/', addStudent);
+router.get("/", getStudents);
+router.post("/", addStudent);
 
-router.get("/student/balance/:studentId", getStudentBalance);
+router.get("/balance/:studentId", getStudentBalance); //Fix the route path
 
 module.exports = router;

@@ -1,24 +1,35 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import Card from "../../components/common/Card";
-import Button from "../../components/common/Button";
+
 
 export default function PortalDashboard() {
   const navigate = useNavigate();
-  const [balance, setBalance] = useState(500); // Initial balance (mock)
+  const [balance, setBalance] = useState(0); // Default to 0
   const [lateFee, setLateFee] = useState(0);
-  const dueDate = new Date("2025-03-01"); // Example due date (mock)
+  const [lastPayment, setLastPayment] = useState("No payments made");
+  const dueDate = new Date("2025-03-01"); // Mock due date
 
   useEffect(() => {
-    const today = new Date();
-    
-    if (today > dueDate) {
-      const daysLate = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24)); // Get late days
-      const penalty = daysLate * 5; // Example: $5 per day late fee
+    const fetchBalance = async () => {
+      try {
+        const response = await axios.get("http://localhost:5001/api/student/balance/1"); // Replace with dynamic studentId
+        const { balance, invoices, lateFee } = response.data;
 
-      setLateFee(penalty);
-      setBalance((prevBalance) => prevBalance + penalty);
-    }
+        setBalance(balance ?? 0);
+        setLateFee(lateFee ?? 0); // Ensure lateFee is always a number
+
+        if (invoices.length > 0) {
+          const latestInvoice = invoices[invoices.length - 1];
+          setLastPayment(`$${latestInvoice.total_amount} on ${new Date(latestInvoice.invoice_date).toLocaleDateString()}`);
+        }
+      } catch (error) {
+        console.error("Error fetching balance:", error);
+      }
+    };
+
+    fetchBalance();
   }, []);
 
   return (
@@ -27,17 +38,14 @@ export default function PortalDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card title="Outstanding Balance" content={`$${balance}`} />
-        <Card title="Upcoming Due Dates" content="3" />
-        <Card title="Last Payment" content="$200 on 03/05/2025" />
-        <Card title="Latest Grades" content="A, B, A-" />
+        <Card title="Upcoming Due Date" content={dueDate.toLocaleDateString()} />
+        <Card title="Last Payment" content={lastPayment} />
 
-        {/* Display Late Fees if applicable */}
-        {lateFee > 0 && (
-          <Card
-            title="Late Fees Applied"
-            content={`$${lateFee} (Due Date: 03/01/2025)`}
-          />
-        )}
+        {/* Late Fee Card - Always Displayed */}
+        <Card
+          title="Late Fees Applied"
+          content={lateFee > 0 ? `$${lateFee} (Due Date: ${dueDate.toLocaleDateString()})` : "No Late Fees"}
+        />
 
         {/* Clickable Card for Viewing Invoices */}
         <div onClick={() => navigate("/portal/download-invoices")} className="cursor-pointer">
