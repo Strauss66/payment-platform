@@ -1,5 +1,5 @@
 const express = require("express");
-const { getStudents, addStudent, getStudentBalance } = require("../controllers/studentController"); // ✅ Import `getStudentBalance`
+const { getStudents, addStudent, getStudentBalance } = require("../controllers/studentController"); // Import `getStudentBalance`
 const router = express.Router();
 
 router.get("/", getStudents);

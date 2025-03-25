@@ -58,6 +58,7 @@ const AuthProvider = ({ children }) => {
       { email: "cashier@test.com", password: "cashier123", role: ROLES.CASHIER },
       { email: "teacher@test.com", password: "teacher123", role: ROLES.TEACHER },
       { email: "student@test.com", password: "student123", role: ROLES.STUDENT_PARENT },
+      { email: "parent@test.com", password: "parent123", role: ROLES.STUDENT_PARENT },
     ];
 
     const testUser = testUsers.find(

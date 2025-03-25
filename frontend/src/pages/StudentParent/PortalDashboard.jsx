@@ -36,7 +36,7 @@ export default function PortalDashboard() {
       <h1 className="text-3xl font-semibold mb-8 text-gray-800">Student Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <DashboardCard icon={<FaDollarSign className="text-2xl text-blue-500" />} title="Balance" content={balance} />
+        <DashboardCard icon={<FaDollarSign className="text-2xl text-blue-500" />} title="Balance" content={`$${balance}`} />
         <DashboardCard icon={<FaCalendarAlt className="text-2xl text-green-500" />} title="Payment Due Date" content={dueDate.toLocaleDateString()} />
         <DashboardCard icon={<FaHistory className="text-2xl text-yellow-500" />} title="Your Last Payment" content={lastPayment} />
         <DashboardCard
