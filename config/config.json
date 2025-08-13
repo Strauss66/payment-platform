@@ -2,23 +2,35 @@
   "development": {
     "username": "root",
     "password": "Dude8866?",
-    "database": "my_db",
+    "database": "school_platform",
     "host": "127.0.0.1",
-    "dialect": "mysql"
+    "port": 3306,
+    "dialect": "mysql",
+    "jwt_secret": "your-super-secret-jwt-key-change-this-in-production",
+    "jwt_expires_in": "24h",
+    "server_port": 5001
   },
   "test": {
     "username": "root",
     "password": null,
     "database": "database_test",
     "host": "127.0.0.1",
-    "dialect": "mysql"
+    "port": 3306,
+    "dialect": "mysql",
+    "jwt_secret": "test-jwt-secret",
+    "jwt_expires_in": "1h",
+    "server_port": 5002
   },
   "production": {
     "username": "root",
     "password": null,
     "database": "database_production",
     "host": "127.0.0.1",
-    "dialect": "mysql"
+    "port": 3306,
+    "dialect": "mysql",
+    "jwt_secret": "production-jwt-secret-change-this",
+    "jwt_expires_in": "24h",
+    "server_port": 5001
   }
 }
 

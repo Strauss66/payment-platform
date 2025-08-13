@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
-import { AuthContext, ROLES } from "../../context/AuthContext";
+import { AuthContext, ROLES } from "../../contexts/AuthContext";
 
 const Navigation = () => {
   const { user, logout } = useContext(AuthContext);

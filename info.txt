@@ -1,0 +1,5 @@
+admin: admin@weglon.test / Admin123!
+cashier: cashier@weglon.test / Cashier123!
+teacher: teacher@weglon.test / Teacher123!
+student: student@weglon.test / Student123!
+parent: parent@weglon.test / Parent123!

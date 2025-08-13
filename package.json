@@ -1,0 +1,32 @@
+{
+     "name": "school-platform",
+    "version": "1.0.0",
+    "description": "School Platform - Full Stack Application",
+    "main": "backend/src/server.js",
+    "type": "module",
+    "scripts": {
+        "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+        "dev:backend": "cd backend && npm run dev",
+        "dev:frontend": "cd frontend && npm start",
+        "start": "cd backend && npm start",
+        "build": "cd frontend && npm run build",
+        "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+        "seed:roles": "cd backend && npm run seed:roles",
+        "seed:admin": "cd backend && npm run seed:admin"
+    },
+    "dependencies": {
+        "bcrypt": "^6.0.0",
+        "cors": "^2.8.5",
+        "dayjs": "^1.11.13",
+        "dotenv": "^17.2.1",
+        "express": "^5.1.0",
+        "helmet": "^8.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "mysql2": "^3.14.3",
+        "sequelize": "^6.37.7"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.10",
+        "concurrently": "^8.2.2"
+    }
+}

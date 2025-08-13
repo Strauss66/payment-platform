@@ -1,31 +1,18 @@
+// src/components/layout/AdminNav.jsx
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
-
-export default function AdminNav() {
-  const location = useLocation();
-
-  const navLinks = [
-    { name: "Manage Users", path: "/admin/users" },
-    { name: "Late Fee Payers", path: "/admin/late-fee-payers" },
-    { name: "Dashboard", path: "/admin/dashboard" },
-  ];
-
+import { NavLink } from "react-router-dom";
+export default function AdminNav(){
   return (
-    <nav className="bg-gray-800 text-white p-4 shadow-md">
-      <ul className="flex justify-center gap-6 md:gap-8">
-        {navLinks.map((link, index) => (
-          <li key={index}>
-            <Link
-              to={link.path}
-              className={`px-4 py-2 rounded transition ${
-                location.pathname === link.path ? "bg-gray-700" : "hover:bg-gray-700"
-              }`}
-            >
-              {link.name}
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <nav className="flex flex-col gap-2">
+      <NavLink to="/app" end>Dashboard</NavLink>
+      <div className="mt-2 text-xs uppercase text-gray-500">Billing</div>
+      <NavLink to="/app/billing/invoices">Invoices</NavLink>
+      <NavLink to="/app/billing/payments">Payments</NavLink>
+      <NavLink to="/app/billing/late-fees">Late Fees</NavLink>
+      <div className="mt-2 text-xs uppercase text-gray-500">People</div>
+      <NavLink to="/app/people/users">Users</NavLink>
+      <NavLink to="/app/people/roles">Roles</NavLink>
+      <NavLink to="/app/people/students">Students</NavLink>
     </nav>
   );
 }

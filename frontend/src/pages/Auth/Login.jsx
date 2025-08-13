@@ -1,104 +1,116 @@
-import React, { useState, useContext } from "react";
-import { AuthContext } from "../../context/AuthContext";
+import React, { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import "mdb-react-ui-kit/dist/css/mdb.min.css";
-import { MDBBtn, MDBContainer, MDBCard, MDBCardBody, MDBCardImage, MDBRow, MDBCol, MDBInput, MDBCheckbox } from "mdb-react-ui-kit";
 
-function Login() {
-  const { login } = useContext(AuthContext); // Use login function from context
+export default function Login() {
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [credentials, setCredentials] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
-  const handleChange = (e) => {
-    setCredentials({ ...credentials, [e.target.name]: e.target.value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Trying to login with:", credentials); // Debug log
-  
+    setError("");
+
     try {
-      await login(credentials);
-  
-      // Get the user from localStorage (since login updates localStorage)
-      const storedUser = JSON.parse(localStorage.getItem("user"));
-      if (!storedUser) {
-        throw new Error("User data not found after login.");
-      }
-  
-      console.log("Login successful, user data:", storedUser); // Debug log
-  
-      // Redirect based on role
+      const user = await login(email, password);
+
+      // Redirect based on first matched role
       const roleRedirects = {
         admin: "/admin/dashboard",
         cashier: "/cashier/dashboard",
         teacher: "/teacher/dashboard",
         student_parent: "/portal/dashboard",
       };
-  
-      navigate(roleRedirects[storedUser.role] || "/login");
-  
+      const rolePriority = ["admin", "cashier", "teacher", "student_parent"];
+      const roles = Array.isArray(user?.roles) ? user.roles : [];
+      const primaryRole = rolePriority.find((r) => roles.includes(r));
+      navigate(roleRedirects[primaryRole] || "/login");
     } catch (err) {
-      console.error("Login error:", err.message);
+      console.error("Login error:", err);
       setError("Invalid email or password");
     }
   };
 
   return (
-    <MDBContainer className="my-5 d-flex justify-content-center">
-      <MDBCard className="shadow-lg" style={{ maxWidth: "800px" }}>
-        <MDBRow className="g-0 d-flex align-items-center">
-          <MDBCol md="6">
-            <MDBCardImage
-              src="https://mdbootstrap.com/img/new/ecommerce/vertical/004.jpg"
-              alt="phone"
-              className="w-100 rounded-start"
-            />
-          </MDBCol>
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-gray-900">Sign In</h2>
+        <p className="text-sm text-gray-600 mt-1">Welcome back to your account</p>
+      </div>
 
-          <MDBCol md="6">
-            <MDBCardBody className="p-4">
-              <h3 className="text-center mb-4">Sign In</h3>
+      {error && (
+        <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-md">
+          {error}
+        </div>
+      )}
 
-              {error && <p className="text-danger text-center">{error}</p>}
+      <div className="space-y-3">
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            Email address
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Enter your email"
+            required
+          />
+        </div>
 
-              <form onSubmit={handleSubmit}>
-                <MDBInput
-                  className="mb-3"
-                  label="Email address"
-                  name="email"
-                  type="email"
-                  onChange={handleChange}
-                  required
-                />
-                <MDBInput
-                  className="mb-3"
-                  label="Password"
-                  name="password"
-                  type="password"
-                  onChange={handleChange}
-                  required
-                />
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Enter your password"
+            required
+          />
+        </div>
+      </div>
 
-                <div className="d-flex justify-content-between mb-3">
-                  <MDBCheckbox name="flexCheck" id="flexCheckDefault" label="Remember me" />
-                  <a href="../ForgotPassword" className="text-primary">Forgot password?</a>
-                </div>
+      <div className="flex items-center justify-between">
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <span className="ml-2 text-sm text-gray-600">Remember me</span>
+        </label>
+        <a
+          href="/auth/forgot-password"
+          className="text-sm text-blue-600 hover:text-blue-500"
+        >
+          Forgot password?
+        </a>
+      </div>
 
-                <MDBBtn type="submit" className="w-100">Sign in</MDBBtn>
-              </form>
-            </MDBCardBody>
-          </MDBCol>
-        </MDBRow>
-      </MDBCard>
-    </MDBContainer>
+      <button
+        type="submit"
+        className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+      >
+        Sign In
+      </button>
+
+      <div className="text-center">
+        <span className="text-sm text-gray-600">Don't have an account? </span>
+        <a
+          href="/auth/register"
+          className="text-sm text-blue-600 hover:text-blue-500 font-medium"
+        >
+          Sign up
+        </a>
+      </div>
+    </form>
   );
 }
-
-export default Login;

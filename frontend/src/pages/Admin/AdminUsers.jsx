@@ -147,7 +147,7 @@ export default function AdminUsers() {
               <Form.Group className="mb-3">
                 <Form.Label>Role</Form.Label>
                 <Form.Select
-                  value={editData.role}
+                  value={editData.role}tion
                   onChange={(e) => setEditData({ ...editData, role: e.target.value })}
                 >
                   <option value="admin">Admin</option>
