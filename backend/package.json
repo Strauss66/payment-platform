@@ -9,10 +9,25 @@
     "dev": "nodemon src/server.js",
     "seed:roles": "node src/db/seeds/seed-roles-perms.js",
     "seed:admin": "node src/db/seeds/seed-bootstrap-admin.js",
+    "seed:super-admin": "node src/db/seeds/seed-super-admin.js",
+    "seed:tenancy": "node src/db/seeds/seed-tenancy-bootstrap.js",
+    "migrate": "node src/db/run-migrations.js",
     "seed:test-users": "node src/db/seeds/seed-test-users.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "seed:student-courses": "node src/db/seeds/seed-student-courses.js",
+    "db:create:dev": "dotenv -e ../.env.dev -- npx sequelize-cli db:create --config sequelize.config.cjs",
+    "db:create:test": "dotenv -e ../.env.test -- npx sequelize-cli db:create --config sequelize.config.cjs",
+    "db:migrate:dev": "dotenv -e ../.env.dev -- npx sequelize-cli db:migrate --config sequelize.config.cjs --migrations-path src/db/migrations",
+    "db:migrate:test": "dotenv -e ../.env.test -- npx sequelize-cli db:migrate --config sequelize.config.cjs --migrations-path src/db/migrations",
+    "db:seed:core:dev": "dotenv -e ../.env.dev -- node scripts/seed-core.js",
+    "db:seed:core:test": "dotenv -e ../.env.test -- node scripts/seed-core.js",
+    "db:seed:tenants:dev": "dotenv -e ../.env.dev -- node scripts/seed-tenants.js",
+    "db:reset:dev": "dotenv -e ../.env.dev -- sh -c 'npx sequelize-cli db:drop --config sequelize.config.cjs || true && npx sequelize-cli db:create --config sequelize.config.cjs && npx sequelize-cli db:migrate --config sequelize.config.cjs --migrations-path src/db/migrations && node scripts/seed-core.js && node scripts/seed-tenants.js'",
+    "db:reset:test": "dotenv -e ../.env.test -- sh -c 'npx sequelize-cli db:drop --config sequelize.config.cjs || true && npx sequelize-cli db:create --config sequelize.config.cjs && npx sequelize-cli db:migrate --config sequelize.config.cjs --migrations-path src/db/migrations && node scripts/seed-core.js'",
+    "dev:env": "dotenv -e ../.env.dev -- node src/server.js",
+    "test": "dotenv -e ../.env.test -- echo \"No tests configured\" && exit 0"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.635.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dayjs": "^1.11.13",
@@ -24,7 +39,9 @@
     "sequelize": "^6.37.7"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "dotenv-cli": "^7.4.4",
+    "nodemon": "^3.1.10",
+    "sequelize-cli": "^6.6.3"
   },
   "keywords": [
     "school",

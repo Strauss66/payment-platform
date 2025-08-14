@@ -22,7 +22,16 @@ async function run() {
     defaults: { user_id: user.id, role_id: adminRole.id }
   });
 
-  console.log(`✅ Bootstrap admin -> email=admin@weglon.test  password=Admin123!  school_id=${school.id}`);
+  // Also ensure a super_admin role is present and assigned to bootstrap admin if desired
+  const superAdminRole = await Role.findOne({ where: { key_name: 'super_admin' } });
+  if (superAdminRole) {
+    await UserRole.findOrCreate({
+      where: { user_id: user.id, role_id: superAdminRole.id },
+      defaults: { user_id: user.id, role_id: superAdminRole.id }
+    });
+  }
+
+  console.log(`✅ Bootstrap admin -> email=admin@weglon.test  password=Admin123!  roles=[admin${superAdminRole ? ', super_admin' : ''}]  school_id=${school.id}`);
   await sequelize.close();
   process.exit(0);
 }

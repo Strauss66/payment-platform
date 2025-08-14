@@ -4,7 +4,9 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import { sequelize, assertDb } from "./config/db.js";
+import { assertSafeDb } from "./utils/safety.js";
 import { User, Role, Permission, RolePermission, UserRole } from "./models/index.js";
+import tenancyRoutes from "./routes/tenancy.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import healthRoutes from "./routes/health.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
@@ -43,7 +45,7 @@ app.use(
   cors({
     origin: "http://localhost:3000", // Allow frontend requests
     methods: "GET,POST,PUT,DELETE",
-    allowedHeaders: "Content-Type,Authorization",
+    allowedHeaders: "Content-Type,Authorization,X-School-Id",
   })
 );
 
@@ -55,6 +57,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/courses", coursesRoutes);
+app.use("/api/tenancy", tenancyRoutes);
 // app.use("/api/invoices", invoiceRoutes);
 // app.use("/api/payments", paymentRoutes);
 
@@ -93,6 +96,8 @@ app.get("/", (req, res) => {
 // Start server function
 async function startServer() {
   try {
+    // Safety preflight to avoid wrong DB usage
+    assertSafeDb();
     // Test database connection
     const dbConnected = await assertDb();
     if (!dbConnected) {

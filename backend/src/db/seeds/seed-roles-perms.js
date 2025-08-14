@@ -5,6 +5,7 @@ async function run() {
   await assertDb();
 
   const roles = [
+    { key_name: 'super_admin', display_name: 'Super Admin' },
     { key_name: 'admin', display_name: 'Administrator' },
     { key_name: 'cashier', display_name: 'Cashier' },
     { key_name: 'teacher', display_name: 'Teacher' },

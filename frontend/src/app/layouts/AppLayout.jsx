@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bell, MessageSquare, Menu, Search, ChevronDown, Edit3, LogOut, User2, Settings, HelpCircle, IdCard, Users } from "lucide-react";
 import { useAuth } from '../../contexts/AuthContext';
 import clsx from "clsx";
+import TopbarSchoolSwitcher from '../../components/TopbarSchoolSwitcher.jsx';
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -88,8 +89,9 @@ export default function AppLayout() {
                 className="w-full pl-10 pr-4 py-2 rounded-full bg-[var(--surface-muted)] outline-none focus:ring-2 focus:ring-[var(--sidebar-ring)]"
               />
             </div>
-            {/* Icons */}
+            {/* Switcher + Icons */}
             <div className="flex items-center gap-3">
+              <TopbarSchoolSwitcher />
               <button aria-label="Notifications" className="relative p-2 rounded hover:bg-[var(--surface-muted)]">
                 <Bell className="size-5 text-[var(--text-muted)]" />
                 <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center text-[10px] bg-[var(--warning)] text-white rounded-full w-4 h-4">1</span>

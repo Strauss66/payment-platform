@@ -1,3 +1,4 @@
+superasdmin: superadmin@weglon.test / Superadmin123!
 admin: admin@weglon.test / Admin123!
 cashier: cashier@weglon.test / Cashier123!
 teacher: teacher@weglon.test / Teacher123!

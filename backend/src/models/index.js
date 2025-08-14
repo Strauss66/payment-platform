@@ -17,8 +17,15 @@ export const Permission = sequelize.define('permissions', {
 export const School = sequelize.define('schools', {
   id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
   name: { type: DataTypes.STRING(160), allowNull: false },
+  slug: { type: DataTypes.STRING(80), allowNull: true, unique: true },
+  subdomain: { type: DataTypes.STRING(80), allowNull: true, unique: true },
+  primary_color: { type: DataTypes.STRING(16), allowNull: true },
+  secondary_color: { type: DataTypes.STRING(16), allowNull: true },
+  logo_url: { type: DataTypes.STRING(512), allowNull: true },
+  s3_bucket: { type: DataTypes.STRING(128), allowNull: true, unique: true },
+  is_active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   timezone: { type: DataTypes.STRING(64), defaultValue: 'America/Denver' }
-}, { tableName: 'schools' });
+}, { tableName: 'schools', timestamps: true, underscored: true });
 
 export const User = sequelize.define('users', {
   id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
@@ -79,6 +86,7 @@ export const DashboardLayout = sequelize.define('dashboard_layouts', {
 // --- Academic domain models ---
 export const Student = sequelize.define('students', {
   id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
   // allowNull true to avoid migration failure on existing rows; association still links to users
   user_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
   first_name: { type: DataTypes.STRING(255), allowNull: false },

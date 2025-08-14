@@ -5,68 +5,59 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
 
-// Resolve a .env even when called from different CWDs
+// Resolve and load the correct .env file deterministically
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const candidateEnvs = [
-  join(__dirname, '../../.env'),          // backend/.env (preferred)
-  join(__dirname, '../../../.env'),       // repo root/.env
-  join(process.cwd(), '.env')             // current working dir
-];
-for (const p of candidateEnvs) {
-  if (fs.existsSync(p)) { dotenv.config({ path: p }); break; }
-}
 
-// Load configuration from config.json
-let dbConfig = {};
-try {
-  const configPath = join(__dirname, '../../config/config.json');
-  if (fs.existsSync(configPath)) {
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    const env = process.env.NODE_ENV || 'development';
-    if (config[env]) {
-      dbConfig = {
-        host: config[env].host || '127.0.0.1',
-        port: config[env].port || 3306,
-        username: config[env].username || 'root',
-        password: config[env].password || '',
-        database: config[env].database || 'my_db',
-        dialect: config[env].dialect || 'mysql'
-      };
-      console.log('✅ Loaded database configuration from config.json for environment:', env);
+function loadEnvFile() {
+  // Respect dotenv-cli if it's being used
+  const explicitPath = process.env.DOTENV_CONFIG_PATH;
+  if (explicitPath && fs.existsSync(explicitPath)) {
+    dotenv.config({ path: explicitPath });
+    return explicitPath;
+  }
+
+  // Fall back to NODE_ENV-based selection
+  const isTest = process.env.NODE_ENV === 'test';
+  const preferred = isTest ? '.env.test' : '.env.dev';
+
+  const candidatePaths = [
+    // repo root
+    join(__dirname, '../../../', preferred),
+    // backend root
+    join(__dirname, '../../', preferred)
+  ];
+
+  for (const p of candidatePaths) {
+    if (fs.existsSync(p)) {
+      dotenv.config({ path: p });
+      return p;
     }
   }
-} catch (error) {
-  console.error('❌ Could not load config.json:', error.message);
-  process.exit(1);
+
+  // As a last resort, try default resolution
+  dotenv.config();
+  return undefined;
 }
 
-// Fallback to environment variables if config.json fails
-if (!dbConfig.username || !dbConfig.database) {
-  dbConfig = {
-    host: process.env.DB_HOST || '127.0.0.1',
-    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
-    username: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'my_db',
-    dialect: 'mysql'
-  };
-  console.log('⚠️  Using fallback environment variables for database configuration');
+const loadedEnvPath = loadEnvFile();
+if (loadedEnvPath) {
+  console.log(`🔧 Loaded environment from ${loadedEnvPath}`);
 }
 
-// Validate configuration
+const dbConfig = {
+  host: process.env.DB_HOST || '127.0.0.1',
+  port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
+  username: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'my_db',
+  dialect: 'mysql'
+};
+
 if (!dbConfig.username || !dbConfig.database) {
   console.error('❌ Database configuration is incomplete:', dbConfig);
   process.exit(1);
 }
-
-console.log('🔧 Database configuration:', {
-  host: dbConfig.host,
-  port: dbConfig.port,
-  username: dbConfig.username,
-  database: dbConfig.database,
-  dialect: dbConfig.dialect
-});
 
 export const sequelize = new Sequelize(
   dbConfig.database,
