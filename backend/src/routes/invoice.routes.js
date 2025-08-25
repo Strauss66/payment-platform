@@ -21,4 +21,13 @@ r.get('/student/:studentId', requireAuth, requireSameSchool, async (req, res) =>
   res.json(list);
 });
 
+// Get invoice by id with computed late fee
+r.get('/:id', requireAuth, requireSameSchool, async (req, res) => {
+  const id = Number(req.params.id);
+  const list = await InvoiceService.getStudentInvoices(req.user.school_id, req.query.student_id);
+  const found = list.find(i => Number(i.id) === id);
+  if (!found) return res.status(404).json({ message: 'Not found' });
+  res.json(found);
+});
+
 export default r;

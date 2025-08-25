@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/apiClient';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, ROLES } from '../contexts/AuthContext';
 import { useTenant } from '../contexts/TenantContext';
 
 export default function TopbarSchoolSwitcher() {
-  const { user } = useAuth();
-  const { currentSchoolId, setSchool } = useTenant();
+  const { user } = useAuth() as any;
+  const { currentSchoolId, setSchool } = useTenant() as any;
   const [schools, setSchools] = useState([]);
 
-  const isSuper = (user?.roles || []).includes('super_admin');
+  const isSuper = (user?.roles || []).includes(ROLES.SUPER_ADMIN);
   useEffect(() => {
     if (!isSuper) return;
     api.get('/api/tenancy/schools?is_active=true&limit=100').then(({ data }) => {

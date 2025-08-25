@@ -22,7 +22,8 @@
           "db:seed:tenants:dev": "cd backend && npm run db:seed:tenants:dev",
           "db:reset:dev": "cd backend && npm run db:reset:dev",
           "db:reset:test": "cd backend && npm run db:reset:test",
-          "dev:env": "cd backend && npm run dev:env"
+          "dev:env": "cd backend && npm run dev:env",
+          "seed:monte": "node backend/src/db/seeds/seed-monte-alban.js"
      },
      "dependencies": {
           "bcrypt": "^6.0.0",

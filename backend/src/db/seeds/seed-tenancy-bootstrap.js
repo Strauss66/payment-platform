@@ -26,23 +26,29 @@ async function run() {
     }
   });
 
-  // Superadmin user
-  const suPass = await bcrypt.hash('Passw0rd!', 10);
-  const [su] = await User.findOrCreate({
-    where: { email: 'root@tenancy.local' },
-    defaults: { email: 'root@tenancy.local', username: 'root', password_hash: suPass, school_id: school.id }
-  });
+  // Superadmin user - ensure+update pattern
+  const suPassPlain = 'Passw0rd!';
+  const suPass = await bcrypt.hash(suPassPlain, 10);
+  let su = await User.findOne({ where: { email: 'root@tenancy.local' } });
+  if (!su) {
+    su = await User.create({ email: 'root@tenancy.local', username: 'root', password_hash: suPass, school_id: school.id });
+  } else {
+    await su.update({ password_hash: suPass, school_id: school.id });
+  }
   await UserRole.findOrCreate({ where: { user_id: su.id, role_id: roles.super_admin.id }, defaults: { user_id: su.id, role_id: roles.super_admin.id } });
 
-  // Default admin user
-  const adminPass = await bcrypt.hash('Passw0rd!', 10);
-  const [admin] = await User.findOrCreate({
-    where: { email: 'admin@default.local' },
-    defaults: { email: 'admin@default.local', username: 'admin', password_hash: adminPass, school_id: school.id }
-  });
+  // Default admin user - ensure+update pattern
+  const adminPassPlain = 'Passw0rd!';
+  const adminPass = await bcrypt.hash(adminPassPlain, 10);
+  let admin = await User.findOne({ where: { email: 'admin@default.local' } });
+  if (!admin) {
+    admin = await User.create({ email: 'admin@default.local', username: 'admin', password_hash: adminPass, school_id: school.id });
+  } else {
+    await admin.update({ password_hash: adminPass, school_id: school.id });
+  }
   await UserRole.findOrCreate({ where: { user_id: admin.id, role_id: roles.admin.id }, defaults: { user_id: admin.id, role_id: roles.admin.id } });
 
-  console.log('✅ Tenancy bootstrap complete');
+  console.log('✅ Tenancy bootstrap ensured');
   console.log('   School:', school.id, school.slug);
   console.log('   SuperAdmin: root@tenancy.local / Passw0rd!');
   console.log('   Admin: admin@default.local / Passw0rd! (school_id=' + school.id + ')');

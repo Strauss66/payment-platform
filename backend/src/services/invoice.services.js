@@ -2,6 +2,28 @@ import { sequelize } from '../config/db.js';
 import { Invoice, InvoiceItem } from '../models/index.js';
 import dayjs from 'dayjs';
 
+export function computeLateFee(invoice, asOfDate, policy = { initialPct: 0.10, monthlyCompPct: 0.015 }) {
+  if (!invoice?.due_at && !invoice?.due_date) return 0.0;
+  const due = dayjs(invoice.due_at || invoice.due_date);
+  const asOf = dayjs(asOfDate || new Date());
+  if (!due.isValid() || asOf.isBefore(due)) return 0.0;
+
+  const principal = Number(invoice.total || 0) - Number(invoice.paid_total || 0);
+  if (principal <= 0) return 0.0;
+
+  // Initial penalty applied once when crossing due date
+  let fee = principal * Number(policy.initialPct || 0);
+
+  // Additional compounding monthly component for each full month after due
+  const monthsLate = asOf.startOf('day').diff(due.startOf('day'), 'month');
+  if (monthsLate > 0) {
+    for (let i = 0; i < monthsLate; i++) {
+      fee += principal * Number(policy.monthlyCompPct || 0);
+    }
+  }
+  return Number(fee.toFixed(2));
+}
+
 export async function createInvoice({ school_id, student_id, number, due_at, items = [] }) {
   return await sequelize.transaction(async (t) => {
     const invoice = await Invoice.create({
@@ -40,8 +62,14 @@ export async function createInvoice({ school_id, student_id, number, due_at, ite
 }
 
 export async function getStudentInvoices(school_id, student_id) {
-  return await Invoice.findAll({
+  const list = await Invoice.findAll({
     where: { school_id, student_id },
     include: [{ model: InvoiceItem }]
+  });
+  // Decorate with computed late fee without mutating stored totals
+  return list.map(inv => {
+    const json = inv.toJSON();
+    json.late_fee_computed = computeLateFee(json, new Date());
+    return json;
   });
 }

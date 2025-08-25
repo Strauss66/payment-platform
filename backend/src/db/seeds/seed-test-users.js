@@ -5,10 +5,10 @@ import { School, User, Role, UserRole } from '../../models/index.js';
 async function run() {
   await assertDb();
 
-  // Get or create school
+  // Use Default School created by tenancy bootstrap
   const [school] = await School.findOrCreate({
-    where: { name: 'Weglon Test School' },
-    defaults: { timezone: 'America/Denver' }
+    where: { slug: 'default' },
+    defaults: { name: 'Default School', slug: 'default' }
   });
 
   // Get roles
@@ -17,34 +17,32 @@ async function run() {
   const teacherRole = await Role.findOne({ where: { key_name: 'teacher' } });
   const studentParentRole = await Role.findOne({ where: { key_name: 'student_parent' } });
 
+  if (!adminRole || !cashierRole || !teacherRole || !studentParentRole) {
+    throw new Error('Roles not seeded. Run core seed (tenancy bootstrap) first to create roles.');
+  }
+
   // Create test users
   const testUsers = [
     {
-      email: 'admin@weglon.test',
-      username: 'admin',
-      password: 'Admin123!',
-      role: adminRole
-    },
-    {
-      email: 'cashier@weglon.test',
+      email: 'cashier@default.local',
       username: 'cashier',
       password: 'Cashier123!',
       role: cashierRole
     },
     {
-      email: 'teacher@weglon.test',
+      email: 'teacher@default.local',
       username: 'teacher',
       password: 'Teacher123!',
       role: teacherRole
     },
     {
-      email: 'student@weglon.test',
+      email: 'student@default.local',
       username: 'student',
       password: 'Student123!',
       role: studentParentRole
     },
     {
-      email: 'parent@weglon.test',
+      email: 'parent@default.local',
       username: 'parent',
       password: 'Parent123!',
       role: studentParentRole
@@ -53,32 +51,37 @@ async function run() {
 
   for (const userData of testUsers) {
     const password_hash = await bcrypt.hash(userData.password, 10);
-    
-    const [user] = await User.findOrCreate({
-      where: { email: userData.email },
-      defaults: {
+    let user = await User.findOne({ where: { email: userData.email } });
+    let action = 'ensured';
+    if (!user) {
+      user = await User.create({
         email: userData.email,
         username: userData.username,
         password_hash,
         school_id: school.id
-      }
-    });
+      });
+      action = 'created';
+    } else {
+      // Ensure school and update password to the seed value for dev determinism
+      await user.update({ school_id: school.id, password_hash });
+      action = 'updated';
+    }
 
-    // Assign role
     await UserRole.findOrCreate({
       where: { user_id: user.id, role_id: userData.role.id },
       defaults: { user_id: user.id, role_id: userData.role.id }
     });
 
-    console.log(`✅ Created user: ${userData.email} (${userData.username}) with role: ${userData.role.key_name}`);
+    console.log(`✅ ${action.toUpperCase()}: ${userData.email} (${userData.username}) role=${userData.role.key_name}`);
   }
 
-  console.log('\n🎯 Test Users Created:');
-  console.log('Admin: admin@weglon.test / Admin123!');
-  console.log('Cashier: cashier@weglon.test / Cashier123!');
-  console.log('Teacher: teacher@weglon.test / Teacher123!');
-  console.log('Student: student@weglon.test / Student123!');
-  console.log('Parent: parent@weglon.test / Parent123!');
+  console.log('\n🎯 Test Users Ensured:');
+  console.log('SuperAdmin: root@tenancy.local / Passw0rd!');
+  console.log('Default Admin: admin@default.local / Passw0rd!');
+  console.log('Cashier: cashier@default.local / Cashier123!');
+  console.log('Teacher: teacher@default.local / Teacher123!');
+  console.log('Student: student@default.local / Student123!');
+  console.log('Parent: parent@default.local / Parent123!');
 
   await sequelize.close();
   process.exit(0);

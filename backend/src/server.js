@@ -7,12 +7,13 @@ import { sequelize, assertDb } from "./config/db.js";
 import { assertSafeDb } from "./utils/safety.js";
 import { User, Role, Permission, RolePermission, UserRole } from "./models/index.js";
 import tenancyRoutes from "./routes/tenancy.routes.js";
+import adminCatalogRoutes from "./routes/admin.catalog.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import healthRoutes from "./routes/health.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import coursesRoutes from "./routes/courses.routes.js";
-// import invoiceRoutes from "./routes/invoice.routes.js";
-// import paymentRoutes from "./routes/payment.route.js";
+import invoiceRoutes from "./routes/invoice.routes.js";
+import paymentRoutes from "./routes/payment.route.js";
 import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -58,8 +59,9 @@ app.use("/api/health", healthRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/courses", coursesRoutes);
 app.use("/api/tenancy", tenancyRoutes);
-// app.use("/api/invoices", invoiceRoutes);
-// app.use("/api/payments", paymentRoutes);
+app.use("/api/admin/catalog", adminCatalogRoutes);
+app.use("/api/billing/invoices", invoiceRoutes);
+app.use("/api/billing/payments", paymentRoutes);
 
 // API root endpoint
 app.get("/api", (req, res) => {
@@ -105,9 +107,10 @@ async function startServer() {
       process.exit(1);
     }
 
-    // Sync database
-    await sequelize.sync({ alter: true });
-    console.log("✅ Database synced successfully");
+    // Enforce migrations-only; refuse to start if pending migrations exist
+    // We rely on sequelize-cli migrations in package.json
+    // Optionally we could check a migration table; for now, do not sync here
+    console.log("✅ Skipping sync; expecting migrations to be applied before start");
 
     // Start server
     const port = config.server_port || process.env.PORT || 5001;

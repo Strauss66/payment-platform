@@ -1,6 +1,14 @@
-superasdmin: superadmin@weglon.test / Superadmin123!
-admin: admin@weglon.test / Admin123!
+SuperAdmin: root@tenancy.local / Passw0rd!
+Admin: admin@default.local / Passw0rd!
 cashier: cashier@weglon.test / Cashier123!
 teacher: teacher@weglon.test / Teacher123!
 student: student@weglon.test / Student123!
 parent: parent@weglon.test / Parent123!
+
+
+
+Monte Admin: admin@montealban.local / Passw0rd!
+Monte Cashier: cashier@montealban.local / Cashier123!
+Any generated student/parent email shown in the seeder output:
+Student passwords: Student123!
+Parent passwords: Parent123!
