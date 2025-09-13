@@ -76,4 +76,8 @@ export default async function seedCoreRbac() {
   }
 }
 
+// For sequelize-cli compatibility
+export async function up() { return seedCoreRbac(); }
+export async function down() { /* no-op rollback */ }
+
 

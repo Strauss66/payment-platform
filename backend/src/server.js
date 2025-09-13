@@ -14,6 +14,12 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import coursesRoutes from "./routes/courses.routes.js";
 import invoiceRoutes from "./routes/invoice.routes.js";
 import paymentRoutes from "./routes/payment.route.js";
+import invoicingEntitiesRoutes from "./routes/billing.invoicing-entities.routes.js";
+import cashRegistersRoutes from "./routes/billing.cash-registers.routes.js";
+import cashierRoutes from "./routes/cashier.routes.js";
+import portalStatementRoutes from "./routes/portal.statement.routes.js";
+import auditRoutes from "./routes/audit.routes.js";
+import lateFeesRoutes from "./routes/billing.latefees.routes.js";
 import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -62,6 +68,12 @@ app.use("/api/tenancy", tenancyRoutes);
 app.use("/api/admin/catalog", adminCatalogRoutes);
 app.use("/api/billing/invoices", invoiceRoutes);
 app.use("/api/billing/payments", paymentRoutes);
+app.use("/api/billing/invoicing-entities", invoicingEntitiesRoutes);
+app.use("/api/billing/cash-registers", cashRegistersRoutes);
+app.use("/api/billing", cashierRoutes);
+app.use("/api/billing/late-fees", lateFeesRoutes);
+app.use("/api/portal", portalStatementRoutes);
+app.use("/api/audit", auditRoutes);
 
 // API root endpoint
 app.get("/api", (req, res) => {

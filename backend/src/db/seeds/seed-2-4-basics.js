@@ -53,4 +53,7 @@ export default async function seedBasics() {
   }
 }
 
+export async function up() { return seedBasics(); }
+export async function down() { /* no-op */ }
+
 

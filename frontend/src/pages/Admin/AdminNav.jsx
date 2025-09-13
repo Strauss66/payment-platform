@@ -9,6 +9,10 @@ export default function AdminNav(){
       <NavLink to="/app/billing/invoices">Invoices</NavLink>
       <NavLink to="/app/billing/payments">Payments</NavLink>
       <NavLink to="/app/billing/late-fees">Late Fees</NavLink>
+      <div className="mt-1 ml-2 flex flex-col gap-1 text-sm">
+        <NavLink to="/app/admin/billing/invoicing-entities">Invoice Emitters</NavLink>
+        <NavLink to="/app/admin/billing/cash-registers">Cash Registers</NavLink>
+      </div>
       <div className="mt-2 text-xs uppercase text-gray-500">People</div>
       <NavLink to="/app/people/users">Users</NavLink>
       <NavLink to="/app/people/roles">Roles</NavLink>

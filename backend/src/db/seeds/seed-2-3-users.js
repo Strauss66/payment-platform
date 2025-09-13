@@ -53,4 +53,7 @@ export default async function seedUsers() {
   }
 }
 
+export async function up() { return seedUsers(); }
+export async function down() { /* no-op */ }
+
 

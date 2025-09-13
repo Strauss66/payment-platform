@@ -43,4 +43,7 @@ export default async function seedSchoolsAndPrefs() {
   }
 }
 
+export async function up() { return seedSchoolsAndPrefs(); }
+export async function down() { /* no-op */ }
+
 

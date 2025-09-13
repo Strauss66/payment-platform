@@ -5,8 +5,6 @@ teacher: teacher@weglon.test / Teacher123!
 student: student@weglon.test / Student123!
 parent: parent@weglon.test / Parent123!
 
-
-
 Monte Admin: admin@montealban.local / Passw0rd!
 Monte Cashier: cashier@montealban.local / Cashier123!
 Any generated student/parent email shown in the seeder output:

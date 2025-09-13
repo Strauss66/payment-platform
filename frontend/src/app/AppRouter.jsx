@@ -2,6 +2,8 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
 import AppLayout from './layouts/AppLayout';
+import ProtectedRoute from './guards/ProtectedRoute';
+import RoleGate from './guards/RoleGate';
 
 // Pages that actually exist
 import LandingPage from '../pages/LandingPage';
@@ -12,8 +14,26 @@ import PortalDashboardPage from '../pages/features/dashboard/PortalDashboardPage
 import BaseDashboard from '../pages/dashboard/BaseDashboard';
 import { useDashboard } from '../state/dashboard/DashboardContext';
 import AdminDashboard from '../pages/Admin/AdminDashboard';
+import AdminDashboardPage from '../pages/dashboard/AdminDashboardPage.jsx';
+import CashierDashboardPage from '../pages/dashboard/CashierDashboardPage.jsx';
+import CloseoutPage from '../pages/Cashier/CloseoutPage.jsx';
+// no hooks inside DashboardRoute to avoid hook-order issues on initial mounts
 import CoursesDashboard from '../pages/StudentParent/CoursesDashboard';
 import StubPage from '../pages/features/StubPage';
+import InvoicingEntitiesPage from '../pages/Admin/billing/InvoicingEntitiesPage';
+import CashRegistersPage from '../pages/Admin/billing/CashRegistersPage';
+import CashierPanel from '../pages/Cashier/CashierPanel.jsx';
+import FamiliesPage from '../pages/people/FamiliesPage.jsx';
+import StudentsPage from '../pages/people/StudentsPage.jsx';
+import TeachersPage from '../pages/people/TeachersPage.jsx';
+import EmployeesPage from '../pages/people/EmployeesPage.jsx';
+import UsersRolesPage from '../pages/people/UsersRolesPage.jsx';
+import OrgPreferencesPage from '../pages/settings/OrgPreferencesPage.jsx';
+import GlobalPreferencesPage from '../pages/settings/GlobalPreferencesPage.jsx';
+import AudienceFlagsPage from '../pages/settings/AudienceFlagsPage.jsx';
+import InvoicesPage from '../pages/billing/InvoicesPage.jsx'
+import PaymentsPage from '../pages/billing/PaymentsPage.jsx'
+import ReportsPage from '../pages/billing/ReportsPage.jsx'
 
 export default function AppRouter() {
   return (
@@ -40,12 +60,131 @@ export default function AppRouter() {
         <Route path="holds" element={<StubPage title="Holds" />} />
         <Route path="activity" element={<StubPage title="Activity Feed" />} />
         <Route path="alerts" element={<StubPage title="Alerts" />} />
+        {/* Billing */}
         <Route path="billing">
-          <Route path="payments" element={<StubPage title="Payments" />} />
-          <Route path="late-fees" element={<StubPage title="Late Fees" />} />
+          <Route path="invoices" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <InvoicesPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="payments" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <PaymentsPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="cash-registers" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <CashRegistersPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="invoicing-entities" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <InvoicingEntitiesPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="reports" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <ReportsPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
         </Route>
         <Route path="events" element={<StubPage title="Campus Events" />} />
         <Route path="admin" element={<AdminDashboard />} />
+        <Route path="admin/dashboard" element={
+          <ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <AdminDashboardPage />
+            </RoleGate>
+          </ProtectedRoute>
+        } />
+        <Route path="cashier/dashboard" element={
+          <ProtectedRoute>
+            <RoleGate allow={["cashier","admin","super_admin"]}>
+              <CashierDashboardPage />
+            </RoleGate>
+          </ProtectedRoute>
+        } />
+        <Route path="cashier/closeout" element={
+          <ProtectedRoute>
+            <RoleGate allow={["cashier","admin","super_admin"]}>
+              <CloseoutPage />
+            </RoleGate>
+          </ProtectedRoute>
+        } />
+        {/* People */}
+        <Route path="people">
+          <Route path="families" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <FamiliesPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="students" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <StudentsPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="teachers" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <TeachersPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="employees" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <EmployeesPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="roles" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <UsersRolesPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+        </Route>
+
+        {/* Settings */}
+        <Route path="settings">
+          <Route path="org" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <OrgPreferencesPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="global" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <GlobalPreferencesPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="flags" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <AudienceFlagsPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+        </Route>
+        <Route path="cashier/panel" element={<CashierPanel />} />
         <Route path="admin/reports" element={<StubPage title="Admin Reports" />} />
         <Route path="admin/collections" element={<StubPage title="Collections" />} />
         <Route path="admin/approvals" element={<StubPage title="Approvals" />} />
@@ -60,17 +199,13 @@ export default function AppRouter() {
 }
 
 function DashboardRoute(){
-  const { layout, widgets } = useDashboard();
-  const tiles = [
-    { title: 'Student Quick Links' },
-    { title: 'Registration Links' },
-    { title: 'Quick Help' }
-  ];
-  const renderWidget = (key) => {
-    const found = widgets.find(w => w.key === key);
-    if (!found) return null;
-    const C = found.component;
-    return <C />;
-  };
-  return <BaseDashboard tiles={tiles} layout={layout} renderWidget={renderWidget} recommendations={[{label:'Invite guardian'}, {label:'Complete profile'}]} />;
+  let roles = [];
+  try { roles = JSON.parse(localStorage.getItem('user.roles') || '[]') || []; } catch {}
+  if (roles.includes('admin') || roles.includes('super_admin')) {
+    return <Navigate to="/app/admin/dashboard" replace />;
+  }
+  if (roles.includes('cashier')) {
+    return <Navigate to="/app/cashier/dashboard" replace />;
+  }
+  return <PortalDashboardPage />;
 }

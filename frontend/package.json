@@ -21,18 +21,23 @@
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.3.0",
     "sequelize": "^6.37.5",
-    "serialize-javascript": "^6.0.2"
+    "serialize-javascript": "^6.0.2",
+    "qs": "^6.13.0"
   },
   "devDependencies": {
     "react-scripts": "^5.0.1",
-    "sequelize-cli": "^6.6.2"
+    "sequelize-cli": "^6.6.2",
+    "cypress": "^13.14.2"
   },
   "name": "payment-platform",
   "version": "1.0.0",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --env=jsdom",
+    "test:watch": "react-scripts test --watch",
+    "e2e": "cypress run || true",
+    "e2e:open": "cypress open",
     "eject": "react-scripts eject",
     "proxy": "http://localhost:5001"
   },

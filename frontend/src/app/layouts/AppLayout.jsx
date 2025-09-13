@@ -1,16 +1,23 @@
 // src/app/layouts/AppLayout.jsx
 import { Outlet, NavLink, Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { Bell, MessageSquare, Menu, Search, ChevronDown, Edit3, LogOut, User2, Settings, HelpCircle, IdCard, Users } from "lucide-react";
+import { Bell, MessageSquare, Menu, Search, ChevronDown, Edit3, LogOut, User2, Settings as SettingsIcon, HelpCircle, IdCard, Users } from "lucide-react";
 import { useAuth } from '../../contexts/AuthContext';
+import { useTenant } from '../../contexts/TenantContext';
+import NoTenantBanner from '../../components/NoTenantBanner.jsx';
 import clsx from "clsx";
 import TopbarSchoolSwitcher from '../../components/TopbarSchoolSwitcher.jsx';
+import { ToastProvider } from '../../components/ui/Toast.jsx';
 
 export default function AppLayout() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem('ui.sidebar.collapsed') === '1'; } catch { return false; }
+  });
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const { user, logout } = useAuth();
+  const { currentSchoolId, needsSelection, brandingNotConfigured } = useTenant();
+  const [forbidden, setForbidden] = useState(false);
 
   useEffect(() => {
     function onDocClick(e){
@@ -28,6 +35,15 @@ export default function AppLayout() {
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    function onForbidden(){
+      setForbidden(true);
+      window.setTimeout(() => setForbidden(false), 4000);
+    }
+    window.addEventListener('api:forbidden', onForbidden);
+    return () => window.removeEventListener('api:forbidden', onForbidden);
+  }, []);
+
   return (
     <div className="min-h-screen grid" style={{ gridTemplateColumns: collapsed ? "72px 1fr" : "280px 1fr" }}>
       {/* Sidebar */}
@@ -35,7 +51,11 @@ export default function AppLayout() {
         <div className="h-16 flex items-center gap-2 px-4">
           <button
             aria-label="Toggle navigation"
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => {
+              const next = !collapsed;
+              setCollapsed(next);
+              try { localStorage.setItem('ui.sidebar.collapsed', next ? '1' : '0'); } catch {}
+            }}
             className="p-2 rounded hover:bg-gray-100"
           >
             <Menu className="size-5" />
@@ -55,23 +75,28 @@ export default function AppLayout() {
             <SidebarItem to="/email" label="Email" collapsed={collapsed} />
           </Section>
 
-          {/* Tools (sample—add the rest similarly) */}
-          <Section title="Tools" collapsed={collapsed}>
-            <SidebarGroup label="Resources" />
-            <SidebarGroup label="Academic" />
-            <SidebarGroup label="Student Services" />
-            <SidebarGroup label="Finance" />
-            <SidebarGroup label="Involvement" />
-            <SidebarGroup label="Info" />
-          </Section>
+          <CollapsibleSection title="Billing" collapsed={collapsed}>
+            <SidebarItem to="/app/admin/dashboard" label="Billing Dashboard (Admin)" collapsed={collapsed} />
+            <SidebarItem to="/app/billing/invoices" label="Invoices" collapsed={collapsed} />
+            <SidebarItem to="/app/billing/payments" label="Payments" collapsed={collapsed} />
+            <SidebarItem to="/app/billing/cash-registers" label="Cash Registers" collapsed={collapsed} />
+            <SidebarItem to="/app/billing/invoicing-entities" label="Invoicing Entities" collapsed={collapsed} />
+            <SidebarItem to="/app/billing/reports" label="Reports" collapsed={collapsed} />
+          </CollapsibleSection>
 
-          <Section title="Groups" collapsed={collapsed}>
-            <SidebarItem to="/groups/academic-societies" label="Academic Societies" collapsed={collapsed} />
-          </Section>
+          <CollapsibleSection title="People" collapsed={collapsed}>
+            <SidebarItem to="/app/people/families" label="Families" collapsed={collapsed} />
+            <SidebarItem to="/app/people/students" label="Students" collapsed={collapsed} />
+            <SidebarItem to="/app/people/teachers" label="Teachers" collapsed={collapsed} />
+            <SidebarItem to="/app/people/employees" label="Employees" collapsed={collapsed} />
+            <SidebarItem to="/app/people/roles" label="Users & Roles" collapsed={collapsed} />
+          </CollapsibleSection>
 
-          <Section title="Pages" collapsed={collapsed}>
-            <SidebarItem to="/support" label="Support" collapsed={collapsed} />
-          </Section>
+          <CollapsibleSection title="Settings" collapsed={collapsed}>
+            <SidebarItem to="/app/settings/org" label="Org Preferences" collapsed={collapsed} />
+            <SidebarItem to="/app/settings/global" label="Global Preferences" collapsed={collapsed} />
+            <SidebarItem to="/app/settings/flags" label="Audience Flags" collapsed={collapsed} />
+          </CollapsibleSection>
         </nav>
       </aside>
 
@@ -116,7 +141,7 @@ export default function AppLayout() {
                         <MenuItem icon={<IdCard className="size-4" />} label="ID Card" />
                       </div>
                       <div className="py-1">
-                        <MenuItem icon={<Settings className="size-4" />} label="Account Settings" />
+                        <MenuItem icon={<SettingsIcon className="size-4" />} label="Account Settings" />
                         <MenuItem icon={<HelpCircle className="size-4" />} label="FAQs" />
                         <MenuItem icon={<HelpCircle className="size-4" />} label="Terms and Privacy" />
                       </div>
@@ -142,9 +167,19 @@ export default function AppLayout() {
           </div>
         </header>
 
-        <main className="px-6 py-6">
-          <Outlet />
-        </main>
+        <ToastProvider>
+          <main className="px-6 py-6">
+            {(!currentSchoolId || needsSelection || brandingNotConfigured) && (
+              <NoTenantBanner />
+            )}
+            {forbidden && (
+              <div role="alert" className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded">
+                You are not authorized to perform this action.
+              </div>
+            )}
+            <Outlet />
+          </main>
+        </ToastProvider>
 
         {/* Floating help bubble (bottom-right) */}
         <button
@@ -180,6 +215,7 @@ function SidebarItem({ to, label, collapsed }) {
           isActive && "bg-gray-100 font-medium"
         )
       }
+      title={collapsed ? label : undefined}
     >
       {collapsed ? <span className="sr-only">{label}</span> : label}
     </NavLink>
@@ -198,6 +234,21 @@ function SidebarGroup({ label }) {
         <a href="#/" className="block px-2 py-1 rounded hover:bg-gray-100">Item A</a>
         <a href="#/" className="block px-2 py-1 rounded hover:bg-gray-100">Item B</a>
       </div>}
+    </div>
+  );
+}
+
+function CollapsibleSection({ title, children, collapsed }){
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      {!collapsed && (
+        <button onClick={()=>setOpen(!open)} className="w-full flex items-center justify-between px-2 mb-2 text-xs uppercase tracking-wide text-gray-500">
+          <span>{title}</span>
+          <ChevronDown className={clsx("size-4 transition-transform", open && "rotate-180")} />
+        </button>
+      )}
+      <div className={clsx("space-y-1", !open && !collapsed && "hidden")}>{children}</div>
     </div>
   );
 }

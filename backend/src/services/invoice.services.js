@@ -1,28 +1,9 @@
 import { sequelize } from '../config/db.js';
 import { Invoice, InvoiceItem } from '../models/index.js';
 import dayjs from 'dayjs';
+import { computeLateFee as computeLateFeePolicy } from './billing/lateFee.js';
 
-export function computeLateFee(invoice, asOfDate, policy = { initialPct: 0.10, monthlyCompPct: 0.015 }) {
-  if (!invoice?.due_at && !invoice?.due_date) return 0.0;
-  const due = dayjs(invoice.due_at || invoice.due_date);
-  const asOf = dayjs(asOfDate || new Date());
-  if (!due.isValid() || asOf.isBefore(due)) return 0.0;
-
-  const principal = Number(invoice.total || 0) - Number(invoice.paid_total || 0);
-  if (principal <= 0) return 0.0;
-
-  // Initial penalty applied once when crossing due date
-  let fee = principal * Number(policy.initialPct || 0);
-
-  // Additional compounding monthly component for each full month after due
-  const monthsLate = asOf.startOf('day').diff(due.startOf('day'), 'month');
-  if (monthsLate > 0) {
-    for (let i = 0; i < monthsLate; i++) {
-      fee += principal * Number(policy.monthlyCompPct || 0);
-    }
-  }
-  return Number(fee.toFixed(2));
-}
+// Consolidated late fee policy sourced from services/billing/lateFee.js
 
 export async function createInvoice({ school_id, student_id, number, due_at, items = [] }) {
   return await sequelize.transaction(async (t) => {

@@ -68,4 +68,7 @@ export default async function seedBilling() {
   }
 }
 
+export async function up() { return seedBilling(); }
+export async function down() { /* no-op */ }
+
 

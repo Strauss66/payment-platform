@@ -56,4 +56,7 @@ export default async function seedFamiliesStudents() {
   }
 }
 
+export async function up() { return seedFamiliesStudents(); }
+export async function down() { /* no-op */ }
+
 

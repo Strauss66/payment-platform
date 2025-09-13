@@ -19,6 +19,7 @@ export function TenantProvider({ children }) {
     const isSuper = roles.includes(ROLES.SUPER_ADMIN);
     if (!isSuper) {
       setCurrentSchoolId(user.school_id);
+      try { localStorage.setItem('tenant.schoolId', String(user.school_id || '')); } catch {}
     } else {
       const saved = localStorage.getItem('tenant.schoolId');
       setCurrentSchoolId(saved ? Number(saved) : null);

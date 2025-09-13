@@ -120,3 +120,101 @@ Enrollment.belongsTo(Student, { foreignKey: 'student_id', as: 'student' });
 
 Class.hasMany(Enrollment, { foreignKey: 'class_id', as: 'enrollments' });
 Enrollment.belongsTo(Class, { foreignKey: 'class_id', as: 'class' });
+
+// --- Billing domain models ---
+export const InvoicingEntity = sequelize.define('invoicing_entities', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  name: { type: DataTypes.STRING(160), allowNull: false },
+  tax_id: { type: DataTypes.STRING(32) },
+  tax_system_code: { type: DataTypes.STRING(16) },
+  email: { type: DataTypes.STRING(191) },
+  phone: { type: DataTypes.STRING(32) },
+  address_json: { type: DataTypes.JSON },
+  is_default: { type: DataTypes.TINYINT, allowNull: false, defaultValue: 0 }
+}, { tableName: 'invoicing_entities', underscored: true });
+
+export const CashRegister = sequelize.define('cash_registers', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  name: { type: DataTypes.STRING(120), allowNull: false },
+  location: { type: DataTypes.STRING(120) },
+  is_active: { type: DataTypes.TINYINT, allowNull: false, defaultValue: 0 }
+}, { tableName: 'cash_registers', underscored: true });
+
+export const CashSession = sequelize.define('cash_sessions', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  cash_register_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  opened_by: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  opened_at: { type: DataTypes.DATE, allowNull: false },
+  closed_at: { type: DataTypes.DATE },
+  totals_json: { type: DataTypes.JSON }
+}, { tableName: 'cash_sessions', underscored: true });
+
+CashRegister.belongsTo(School, { foreignKey: 'school_id', as: 'school' });
+CashSession.belongsTo(CashRegister, { foreignKey: 'cash_register_id', as: 'register' });
+CashSession.belongsTo(User, { foreignKey: 'opened_by', as: 'openedBy' });
+
+// --- AR/AP models used by services ---
+export const Invoice = sequelize.define('invoices', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  student_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  charge_concept_id: { type: DataTypes.BIGINT.UNSIGNED },
+  period_month: { type: DataTypes.TINYINT },
+  period_year: { type: DataTypes.SMALLINT },
+  due_date: { type: DataTypes.DATEONLY },
+  subtotal: { type: DataTypes.DECIMAL(12,2), defaultValue: 0 },
+  discount_total: { type: DataTypes.DECIMAL(12,2), defaultValue: 0 },
+  tax_total: { type: DataTypes.DECIMAL(12,2), defaultValue: 0 },
+  late_fee_accrued: { type: DataTypes.DECIMAL(12,2), defaultValue: 0 },
+  total: { type: DataTypes.DECIMAL(12,2), defaultValue: 0 },
+  paid_total: { type: DataTypes.DECIMAL(12,2), defaultValue: 0 },
+  balance: { type: DataTypes.DECIMAL(12,2), defaultValue: 0 },
+  status: { type: DataTypes.ENUM('open','partial','paid','void'), defaultValue: 'open' }
+}, { tableName: 'invoices', underscored: true });
+
+export const InvoiceItem = sequelize.define('invoice_items', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  invoice_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  description: { type: DataTypes.STRING(255), allowNull: false },
+  qty: { type: DataTypes.DECIMAL(10,2), allowNull: false, defaultValue: 1 },
+  unit_price: { type: DataTypes.DECIMAL(12,2), allowNull: false, defaultValue: 0 },
+  discount_amount: { type: DataTypes.DECIMAL(12,2), allowNull: false, defaultValue: 0 },
+  tax_amount: { type: DataTypes.DECIMAL(12,2), allowNull: false, defaultValue: 0 },
+  line_total: { type: DataTypes.DECIMAL(12,2), allowNull: false, defaultValue: 0 }
+}, { tableName: 'invoice_items', timestamps: false, underscored: true });
+
+Invoice.hasMany(InvoiceItem, { foreignKey: 'invoice_id', as: 'items' });
+InvoiceItem.belongsTo(Invoice, { foreignKey: 'invoice_id', as: 'invoice' });
+
+export const Payment = sequelize.define('payments', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  invoice_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  payment_method_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  amount: { type: DataTypes.DECIMAL(12,2), allowNull: false },
+  paid_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+  ref: { type: DataTypes.STRING(64) },
+  cashier_user_id: { type: DataTypes.BIGINT.UNSIGNED },
+  session_id: { type: DataTypes.BIGINT.UNSIGNED },
+  note: { type: DataTypes.STRING(255) }
+}, { tableName: 'payments', underscored: true });
+
+export const PaymentAllocation = sequelize.define('payment_allocations', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  payment_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  invoice_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  invoice_item_id: { type: DataTypes.BIGINT.UNSIGNED },
+  amount: { type: DataTypes.DECIMAL(12,2), allowNull: false }
+}, { tableName: 'payment_allocations', timestamps: false, underscored: true });
+
+Payment.hasMany(PaymentAllocation, { foreignKey: 'payment_id', as: 'allocations' });
+PaymentAllocation.belongsTo(Payment, { foreignKey: 'payment_id', as: 'payment' });
+PaymentAllocation.belongsTo(Invoice, { foreignKey: 'invoice_id', as: 'invoice' });
+
+Payment.belongsTo(CashSession, { foreignKey: 'session_id', as: 'session' });
+
+// Link invoices to students for search/join needs
+Invoice.belongsTo(Student, { foreignKey: 'student_id', as: 'student' });
