@@ -50,6 +50,8 @@ export default function AppRouter() {
       <Route path="app" element={<AppLayout />}>
         <Route index element={<DashboardRoute />} />
         <Route path="dashboard" element={<DashboardRoute />} />
+        <Route path="activity" element={<StubPage title="Activity" />} />
+        <Route path="announcements" element={<StubPage title="Announcements" />} />
         <Route path="portal" element={<PortalDashboardPage />} />
         <Route path="courses" element={<CoursesDashboard />} />
         <Route path="schedule" element={<StubPage title="Class Schedule" />} />
@@ -97,6 +99,13 @@ export default function AppRouter() {
               </RoleGate>
             </ProtectedRoute>
           } />
+        </Route>
+        {/* Tools */}
+        <Route path="tools">
+          <Route path="resources" element={<StubPage title="Resources" />} />
+          <Route path="academic" element={<StubPage title="Academic" />} />
+          <Route path="student-services" element={<StubPage title="Student Services" />} />
+          <Route path="employee-tools" element={<StubPage title="Employee Tools" />} />
         </Route>
         <Route path="events" element={<StubPage title="Campus Events" />} />
         <Route path="admin" element={<AdminDashboard />} />

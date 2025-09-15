@@ -4,6 +4,7 @@ import { requireRoles } from '../middleware/rbac.js';
 import { requireSameSchool, tenantScope } from '../middleware/tenancy.js';
 import * as InvoiceService from '../services/invoice.services.js';
 import { Invoice, InvoiceItem, Student } from '../models/index.js';
+import { computeLateFee } from '../services/billing/lateFee.js';
 import { Op } from 'sequelize';
 import { z } from 'zod';
 
@@ -42,7 +43,7 @@ r.get('/', requireAuth, tenantScope, requireSameSchool, async (req, res) => {
   });
 
   try {
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production' && String(process.env.DEBUG_INVOICES || 'false').toLowerCase() === 'true') {
       try { console.debug('Invoices list query', req.query); } catch {}
     }
     const params = querySchema.parse(req.query);
@@ -126,12 +127,23 @@ r.get('/student/:studentId', requireAuth, requireSameSchool, async (req, res) =>
 });
 
 // Get invoice by id with computed late fee
-r.get('/:id', requireAuth, requireSameSchool, async (req, res) => {
-  const id = Number(req.params.id);
-  const list = await InvoiceService.getStudentInvoices(req.user.school_id, req.query.student_id);
-  const found = list.find(i => Number(i.id) === id);
-  if (!found) return res.status(404).json({ message: 'Not found' });
-  res.json(found);
+r.get('/:id', requireAuth, tenantScope, requireSameSchool, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ message: 'Invalid id' });
+    const schoolId = req.context?.schoolId ?? req.user.school_id;
+    const inv = await Invoice.findOne({
+      where: { id, school_id: schoolId },
+      include: [{ model: InvoiceItem, as: 'items', required: false }]
+    });
+    if (!inv) return res.status(404).json({ message: 'Not found' });
+    const json = inv.toJSON();
+    json.late_fee_computed = computeLateFee(json, new Date());
+    return res.json(json);
+  } catch (err) {
+    console.error('Get invoice failed', err);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 export default r;

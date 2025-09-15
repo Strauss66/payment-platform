@@ -69,6 +69,15 @@ export default function AppLayout() {
 
         {/* NAV CONTENT */}
         <nav className="px-3 pb-6 space-y-6 overflow-y-auto h-[calc(100vh-4rem)]">
+          {/* Primary Navigation */}
+          <Section title="Navigation" collapsed={collapsed}>
+            <SidebarItem to="/app/dashboard" label="Dashboard" collapsed={collapsed} />
+            <SidebarItem to="/app/activity" label="Activity" collapsed={collapsed} />
+            <SidebarItem to="/app/tasks" label="Tasks" collapsed={collapsed} />
+            <SidebarItem to="/app/announcements" label="Announcements" collapsed={collapsed} />
+            <SidebarItem to="/app/events" label="Events & Calendars" collapsed={collapsed} />
+          </Section>
+
           {/* Shortcuts */}
           <Section title="Shortcuts" collapsed={collapsed} action={!collapsed && <a className="text-xs underline inline-flex items-center gap-1" href="#/" aria-label="Edit shortcuts"><Edit3 className="size-3" />Edit</a>}>
             <SidebarItem to="/canvas" label="Canvas (I-Learn)" collapsed={collapsed} />
@@ -96,6 +105,14 @@ export default function AppLayout() {
             <SidebarItem to="/app/settings/org" label="Org Preferences" collapsed={collapsed} />
             <SidebarItem to="/app/settings/global" label="Global Preferences" collapsed={collapsed} />
             <SidebarItem to="/app/settings/flags" label="Audience Flags" collapsed={collapsed} />
+          </CollapsibleSection>
+
+          {/* Tools */}
+          <CollapsibleSection title="Tools" collapsed={collapsed}>
+            <SidebarItem to="/app/tools/resources" label="Resources" collapsed={collapsed} />
+            <SidebarItem to="/app/tools/academic" label="Academic" collapsed={collapsed} />
+            <SidebarItem to="/app/tools/student-services" label="Student Services" collapsed={collapsed} />
+            <SidebarItem to="/app/tools/employee-tools" label="Employee Tools" collapsed={collapsed} />
           </CollapsibleSection>
         </nav>
       </aside>

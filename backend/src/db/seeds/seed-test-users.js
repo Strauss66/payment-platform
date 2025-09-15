@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { sequelize, assertDb } from '../../config/db.js';
-import { School, User, Role, UserRole } from '../../models/index.js';
+import { School, User, Role, UserRole, Student } from '../../models/index.js';
 
 async function run() {
   await assertDb();
@@ -46,6 +46,19 @@ async function run() {
       username: 'parent',
       password: 'Parent123!',
       role: studentParentRole
+    },
+    // Additional convenience accounts to match info.txt and docs
+    {
+      email: 'student@weglon.test',
+      username: 'student-weglon',
+      password: 'Student123!',
+      role: studentParentRole
+    },
+    {
+      email: 'parent@weglon.test',
+      username: 'parent-weglon',
+      password: 'Parent123!',
+      role: studentParentRole
     }
   ];
 
@@ -73,6 +86,25 @@ async function run() {
     });
 
     console.log(`✅ ${action.toUpperCase()}: ${userData.email} (${userData.username}) role=${userData.role.key_name}`);
+  }
+
+  // Ensure a Student row linked to student@weglon.test for portal linking
+  const studentUser = await User.findOne({ where: { email: 'student@weglon.test' } });
+  if (studentUser) {
+    let stu = await Student.findOne({ where: { user_id: studentUser.id } });
+    if (!stu) {
+      await Student.create({
+        school_id: school.id,
+        user_id: studentUser.id,
+        first_name: 'Dev',
+        last_name: 'Student',
+        balance: 0,
+        late_fees: 0
+      });
+      console.log('✅ CREATED: Student row linked to student@weglon.test');
+    } else {
+      console.log('✅ ENSURED: Student row exists for student@weglon.test');
+    }
   }
 
   console.log('\n🎯 Test Users Ensured:');

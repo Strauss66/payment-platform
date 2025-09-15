@@ -5,14 +5,14 @@ import { computeLateFee as computeLateFeePolicy } from './billing/lateFee.js';
 
 // Consolidated late fee policy sourced from services/billing/lateFee.js
 
-export async function createInvoice({ school_id, student_id, number, due_at, items = [] }) {
+export async function createInvoice({ school_id, student_id, number, due_date, items = [] }) {
   return await sequelize.transaction(async (t) => {
     const invoice = await Invoice.create({
       school_id,
       student_id,
       number,
-      status: 'issued',
-      due_at: due_at ? new Date(due_at) : dayjs().add(14, 'day').toDate()
+      status: 'open',
+      due_date: due_date ? dayjs(due_date).format('YYYY-MM-DD') : dayjs().add(14, 'day').format('YYYY-MM-DD')
     }, { transaction: t });
 
     let subtotal = 0, discount_total = 0, tax_total = 0;

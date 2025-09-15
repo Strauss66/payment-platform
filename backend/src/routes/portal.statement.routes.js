@@ -2,10 +2,37 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { requireSameSchool } from '../middleware/tenancy.js';
 import { ROLES } from '../utils/roles.js';
-import { Invoice, Student } from '../models/index.js';
+import { Invoice, Student, User } from '../models/index.js';
 import { computeLateFee } from '../services/billing/lateFee.js';
 
 const r = Router();
+
+function parseParentChildLinks() {
+  try {
+    const raw = process.env.PARENT_CHILD_LINKS || '';
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+async function isParentAuthorizedForStudent(reqUser, student) {
+  const roles = reqUser?.roles || [];
+  const isParent = roles.includes('student_parent');
+  if (!isParent) return false;
+  // Dev-friendly mapping via env; fallback to common demo accounts
+  const links = parseParentChildLinks();
+  const defaultLink = { parent: 'parent@weglon.test', student: 'student@weglon.test' };
+  const all = [...links, defaultLink];
+  const match = all.find(l => String(l.parent).toLowerCase() === String(reqUser.email || '').toLowerCase());
+  if (!match) return false;
+  const child = await User.findOne({ where: { email: match.student } });
+  if (!child) return false;
+  return Number(student.user_id) === Number(child.id);
+}
 
 // GET /api/portal/statement/:studentId
 // Composes invoices + computed late fees and returns invoices[] and summary
@@ -23,8 +50,9 @@ r.get('/statement/:studentId', requireAuth, requireSameSchool, async (req, res) 
   }
 
   if (!isPrivileged) {
-    // Allow only if this student is linked to the current user (covers student; parent linkage not modeled here)
-    if (Number(student.user_id) !== Number(req.user.id)) {
+    const isStudentSelf = Number(student.user_id) === Number(req.user.id);
+    const parentOk = await isParentAuthorizedForStudent(req.user, student);
+    if (!isStudentSelf && !parentOk) {
       return res.status(403).json({ code: 'FORBIDDEN', message: 'Forbidden' });
     }
   }
@@ -57,6 +85,42 @@ r.get('/statement/:studentId', requireAuth, requireSameSchool, async (req, res) 
   };
 
   res.json({ invoices: out, summary });
+});
+
+// GET /api/portal/my-students - return students current user can view
+r.get('/my-students', requireAuth, requireSameSchool, async (req, res) => {
+  try {
+    const schoolId = Number(req.user.school_id);
+    const roles = req.user?.roles || [];
+    const isPrivileged = roles.includes(ROLES.ADMIN) || roles.includes(ROLES.CASHIER) || roles.includes('admin') || roles.includes('cashier');
+    let where = { school_id: schoolId };
+
+    if (isPrivileged) {
+      // admins can see none by default here; keep empty to avoid large response
+      return res.json([]);
+    }
+
+    // Student: self only
+    const isStudent = !roles.includes(ROLES.TEACHER) && !roles.includes(ROLES.ADMIN) && !roles.includes(ROLES.CASHIER) && !roles.includes('teacher') && (roles.includes(ROLES.STUDENT_PARENT) || roles.includes('student_parent'));
+    const out = [];
+
+    const self = await Student.findOne({ where: { school_id: schoolId, user_id: req.user.id } });
+    if (self) out.push({ id: self.id, first_name: self.first_name, last_name: self.last_name });
+
+    // Parent mapping
+    const allStudents = await Student.findAll({ where: { school_id: schoolId } });
+    for (const s of allStudents) {
+      const ok = await isParentAuthorizedForStudent(req.user, s);
+      if (ok) out.push({ id: s.id, first_name: s.first_name, last_name: s.last_name });
+    }
+
+    // de-dupe by id
+    const uniq = Array.from(new Map(out.map(o => [o.id, o])).values());
+    return res.json(uniq);
+  } catch (err) {
+    console.error('my-students failed', err);
+    return res.json([]);
+  }
 });
 
 export default r;
