@@ -86,6 +86,8 @@ function AdminAnnouncements(){
   const [rows, setRows] = useState([]);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [form, setForm] = useState({
     title: '', body: '', category: 'other', audience_type: 'school',
     entireSchool: true,
@@ -150,26 +152,34 @@ function AdminAnnouncements(){
     try { await announcementsApi.remove(id); await load(); } catch { alert('Delete failed'); }
   };
 
-  const onEdit = async (a) => {
-    const title = window.prompt('Title', a.title);
-    if (title == null) return;
+  const onEdit = (a) => {
+    setEditingAnnouncement(a);
+    setIsEditOpen(true);
+  };
+
+  const handleSaveEdit = async (updated) => {
+    if (!editingAnnouncement) return;
     try {
-      await announcementsApi.update(a.id, {
-        title,
-        body: a.body,
-        category: a.category,
-        entireSchool: a.audience_type === 'school',
-        audience_type: a.audience_type,
-        sections: a.sections,
-        classIds: a.classIds,
-        studentIds: a.studentIds,
-        roleKeys: a.roleKeys,
-        imageKeys: a.imageKeys || a.imageUrls,
-        startsAt: new Date(a.startsAt).toISOString(),
-        endsAt: a.endsAt ? new Date(a.endsAt).toISOString() : null
+      await announcementsApi.update(editingAnnouncement.id, {
+        title: updated.title,
+        body: updated.body,
+        category: updated.category,
+        entireSchool: !!updated.entireSchool,
+        audience_type: updated.entireSchool ? 'school' : updated.audience_type,
+        sections: updated.sections?.length ? updated.sections : undefined,
+        classIds: updated.classIds?.length ? updated.classIds : undefined,
+        studentIds: updated.studentIds?.length ? updated.studentIds : undefined,
+        roleKeys: updated.roleKeys?.length ? updated.roleKeys : undefined,
+        imageKeys: updated.imageKeys?.length ? updated.imageKeys : undefined,
+        startsAt: updated.startsAt,
+        endsAt: updated.endsAt || null
       });
+      setIsEditOpen(false);
+      setEditingAnnouncement(null);
       await load();
-    } catch { alert('Update failed'); }
+    } catch {
+      alert('Update failed');
+    }
   };
 
   return (
@@ -344,6 +354,175 @@ function AdminAnnouncements(){
             </div>
           </div>
         ))}
+      </div>
+      <EditAnnouncementModal
+        open={isEditOpen}
+        announcement={editingAnnouncement}
+        onClose={()=>{ setIsEditOpen(false); setEditingAnnouncement(null); }}
+        onSave={handleSaveEdit}
+      />
+    </div>
+  );
+}
+
+function EditAnnouncementModal({ announcement, open, onClose, onSave }){
+  const [form, setForm] = useState({
+    title: '', body: '', category: 'other', audience_type: 'school',
+    entireSchool: true,
+    sections: [], classIds: [], studentIds: [], roleKeys: [], imageKeys: [], startsAt: '', endsAt: ''
+  });
+
+  useEffect(() => {
+    if (!open || !announcement) return;
+    const a = announcement;
+    const toLocal = (iso) => {
+      if (!iso) return '';
+      try { return new Date(iso).toISOString().slice(0,16); } catch { return ''; }
+    };
+    setForm({
+      title: a.title || '',
+      body: a.body || '',
+      category: a.category || 'other',
+      audience_type: a.audience_type || 'school',
+      entireSchool: a.audience_type === 'school',
+      sections: Array.isArray(a.sections) ? a.sections : [],
+      classIds: Array.isArray(a.classIds) ? a.classIds : [],
+      studentIds: Array.isArray(a.studentIds) ? a.studentIds : [],
+      roleKeys: Array.isArray(a.roleKeys) ? a.roleKeys : [],
+      imageKeys: Array.isArray(a.imageKeys) ? a.imageKeys : [],
+      startsAt: toLocal(a.startsAt),
+      endsAt: a.endsAt ? toLocal(a.endsAt) : ''
+    });
+  }, [open, announcement]);
+
+  if (!open) return null;
+
+  const isValid = (() => {
+    if (!form.title?.trim() || !form.body?.trim() || !form.category || !form.startsAt) return false;
+    if (!form.entireSchool) {
+      if (form.audience_type === 'section' && form.sections.length === 0) return false;
+      if (form.audience_type === 'class' && form.classIds.length === 0) return false;
+      if (form.audience_type === 'student' && form.studentIds.length === 0) return false;
+      const anyAudience = form.sections.length || form.classIds.length || form.studentIds.length || form.roleKeys.length;
+      if (!anyAudience) return false;
+    }
+    if (form.imageKeys.length > 3) return false;
+    if (form.endsAt && new Date(form.endsAt) <= new Date(form.startsAt)) return false;
+    return true;
+  })();
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[85vh] overflow-auto">
+          <div className="px-6 py-4 border-b flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Edit Announcement</h2>
+            <button onClick={onClose} className="text-gray-500">✕</button>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm text-gray-600 mb-1">Title</label>
+              <input value={form.title} onChange={(e)=>setForm({ ...form, title: e.target.value })} className="w-full border rounded px-3 py-2" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm text-gray-600 mb-1">Body</label>
+              <textarea value={form.body} onChange={(e)=>setForm({ ...form, body: e.target.value })} className="w-full border rounded px-3 py-2" rows={3} />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Category</label>
+              <select value={form.category} onChange={(e)=>setForm({ ...form, category: e.target.value })} className="w-full border rounded px-3 py-2">
+                <option value="payments">Payments</option>
+                <option value="events">Events</option>
+                <option value="activities">Activities</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Audience</label>
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={()=>{
+                    const nextEntire = !form.entireSchool;
+                    if (nextEntire) {
+                      setForm({ ...form, entireSchool: true, audience_type: 'school', sections: [], classIds: [], studentIds: [], roleKeys: [] });
+                    } else {
+                      setForm({ ...form, entireSchool: false });
+                    }
+                  }} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${form.entireSchool? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-900'}`}>
+                    Entire school
+                  </button>
+                  {[
+                    { key: 'section', label: 'Sections' },
+                    { key: 'class', label: 'Classes' },
+                    { key: 'student', label: 'Students' }
+                  ].map(opt => (
+                    <button key={opt.key} type="button" onClick={()=>setForm({ ...form, audience_type: opt.key, entireSchool:false })} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${form.audience_type===opt.key && !form.entireSchool ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-900'}`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {['teachers','parents'].map(r => (
+                    <button key={r} type="button" onClick={()=>{
+                      const current = form.roleKeys || [];
+                      const exists = current.includes(r);
+                      const next = exists ? current.filter(x=>x!==r) : [...current, r];
+                      setForm({ ...form, roleKeys: next, entireSchool: false });
+                    }} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${(form.roleKeys||[]).includes(r)? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-900'}`}>
+                      {r.charAt(0).toUpperCase()+r.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {form.audience_type === 'section' && (
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-600 mb-1">Sections</label>
+                <div className="flex flex-wrap gap-2">
+                  {SECTION_OPTIONS.map(opt => (
+                    <button type="button" key={opt.value} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded border ${form.sections.includes(opt.value) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-900'}`} onClick={()=>{
+                      const has = form.sections.includes(opt.value);
+                      const next = has ? form.sections.filter(x=>x!==opt.value) : [...form.sections, opt.value];
+                      setForm({ ...form, sections: next, entireSchool: false });
+                    }}>{opt.label}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {form.audience_type === 'class' && (
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-600 mb-1">Classes (IDs)</label>
+                <input value={form.classIds.join(',')} onChange={(e)=>setForm({ ...form, classIds: e.target.value.split(',').map(v=>Number(v)).filter(Boolean), entireSchool: false })} placeholder="e.g. 1,2,3" className="w-full border rounded px-3 py-2" />
+              </div>
+            )}
+            {form.audience_type === 'student' && (
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-600 mb-1">Students (IDs)</label>
+                <input value={form.studentIds.join(',')} onChange={(e)=>setForm({ ...form, studentIds: e.target.value.split(',').map(v=>Number(v)).filter(Boolean) })} placeholder="e.g. 10,11" className="w-full border rounded px-3 py-2" />
+              </div>
+            )}
+            <div className="md:col-span-2">
+              <label className="block text-sm text-gray-600 mb-1">Images (up to 3)</label>
+              <ImagePicker images={form.imageKeys} onChange={(imageKeys)=>setForm({ ...form, imageKeys })} />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Starts At</label>
+              <input type="datetime-local" value={form.startsAt} onChange={(e)=>setForm({ ...form, startsAt: e.target.value })} className="w-full border rounded px-3 py-2" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Ends At</label>
+              <input type="datetime-local" value={form.endsAt} onChange={(e)=>setForm({ ...form, endsAt: e.target.value })} className="w-full border rounded px-3 py-2" />
+              {form.endsAt && form.startsAt && new Date(form.endsAt) <= new Date(form.startsAt) && (
+                <div className="text-xs text-red-600 mt-1">Ends At must be after Starts At</div>
+              )}
+            </div>
+          </div>
+          <div className="px-6 py-4 border-t flex items-center justify-end gap-2">
+            <button onClick={onClose} className="px-4 py-2 rounded border">Cancel</button>
+            <button onClick={()=>onSave(form)} disabled={!isValid} className="px-4 py-2 rounded bg-violet-600 text-white disabled:opacity-50">Save</button>
+          </div>
+        </div>
       </div>
     </div>
   );
