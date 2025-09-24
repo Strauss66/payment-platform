@@ -1,3 +1,9 @@
+/**
+ * Announcements management UI (admin + portal)
+ * - Admin: create, list, edit, delete announcements with audience targeting and images
+ * - Portal: read-only feed of visible announcements
+ * - ImagePicker supports S3 presigned uploads and immediate previews by key
+ */
 import React, { useEffect, useMemo, useState } from 'react';
 import { announcementsApi } from '../../lib/api.announcements';
 import { useAuth } from '../../contexts/AuthContext';
@@ -15,6 +21,7 @@ const SECTION_OPTIONS = [
   { value: 'high', label: 'High' }
 ];
 
+/** Root page that routes to Admin or Portal flavor based on roles */
 export default function AnnouncementsPage(){
   const { user } = useAuth();
   const roles = user?.roles || [];
@@ -22,6 +29,7 @@ export default function AnnouncementsPage(){
   return isAdmin ? <AdminAnnouncements /> : <PortalAnnouncements />;
 }
 
+/** Modal for editing a single announcement (local state mirrors DTO) */
 function EditAnnouncementModal({ announcement, open, onClose, onSave }){
   const a = announcement || {};
   const [local, setLocal] = useState({
@@ -58,6 +66,7 @@ function EditAnnouncementModal({ announcement, open, onClose, onSave }){
     });
   }, [announcement]);
 
+  // Stable mapping of key->signedUrl from incoming row (for previews of existing images)
   const signedByKey = React.useMemo(() => {
     const map = {};
     const keys = Array.isArray(a.imageKeys) ? a.imageKeys : [];
@@ -176,6 +185,7 @@ function EditAnnouncementModal({ announcement, open, onClose, onSave }){
   );
 }
 
+/** Portal view of announcements visible to the current user */
 function PortalAnnouncements(){
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -206,21 +216,18 @@ function PortalAnnouncements(){
           <h3 className="text-lg font-semibold">{a.title}</h3>
           {a.body && <p className="text-gray-700 whitespace-pre-wrap mt-1">{a.body}</p>}
           {(() => {
-            const imgs = a.imageSignedUrls?.length ? a.imageSignedUrls : (a.imageUrls?.length ? a.imageUrls : (Array.isArray(a.imageKeys) ? a.imageKeys.map(k=>mediaUrl(k)) : []));
-            return imgs && imgs.length > 0;
+            const imgs = resolveAnnouncementImages(a);
+            return imgs.length > 0;
           })() && (
             <div className="mt-2 flex gap-2 flex-wrap">
-              {(a.imageSignedUrls?.length ? a.imageSignedUrls : (a.imageUrls?.length ? a.imageUrls : (Array.isArray(a.imageKeys) ? a.imageKeys.map(k=>mediaUrl(k)) : []))).map((src, i) => (
+              {resolveAnnouncementImages(a).map((src, i) => (
                 <img
                   key={i}
                   src={src}
                   alt={a.imageAlts?.[i] || ''}
                   loading="lazy"
                   referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    console.error('[ANN:image:error]', { id: a.id, src });
-                    e.currentTarget.style.display = 'none';
-                  }}
+                  onError={(e)=>{ e.currentTarget.style.display='none'; }}
                   className="w-24 h-24 object-cover rounded border"
                 />
               ))}
@@ -236,6 +243,7 @@ function PortalAnnouncements(){
   );
 }
 
+/** Admin view: create form and list with actions */
 function AdminAnnouncements(){
   const [rows, setRows] = useState([]);
   const [count, setCount] = useState(0);
@@ -440,25 +448,32 @@ function AdminAnnouncements(){
       <div className="space-y-3">
         {loading ? <div>Loading…</div> : rows.length === 0 ? <EmptyState /> : rows.map(a => (
           <div key={a.id} className="p-4 border rounded-lg bg-white flex items-center gap-4">
-            {/* Thumbnail */}
-            <div className="w-24 h-20 rounded-lg overflow-hidden border bg-gray-50 shrink-0 grid place-items-center">
+            {/* Images gallery (up to 3) */}
+            <div className="shrink-0">
               {(() => {
-                const imgs = a.imageSignedUrls?.length ? a.imageSignedUrls : (a.imageUrls?.length ? a.imageUrls : (Array.isArray(a.imageKeys) ? a.imageKeys.map(k=>mediaUrl(k)) : []));
-                if (!imgs.length) return <span className="text-xs text-gray-500">No image</span>;
-                return imgs.slice(0,1).map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    alt={a.imageAlts?.[i] || 'thumb'}
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      console.error('[ANN:image:error]', { id: a.id, src });
-                      e.currentTarget.style.display = 'none';
-                    }}
-                    className="w-full h-full object-cover"
-                  />
-                ));
+                const imgs = resolveAnnouncementImages(a);
+                if (!imgs.length) {
+                  return (
+                    <div className="w-28 h-20 rounded-lg overflow-hidden border bg-gray-50 grid place-items-center">
+                      <span className="text-xs text-gray-500">No image</span>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="flex gap-2">
+                    {imgs.slice(0,3).map((src, i) => (
+                      <img
+                        key={`${src}-${i}`}
+                        src={src}
+                        alt={a.imageAlts?.[i] || `image ${i+1}`}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        className="w-24 h-20 object-cover rounded-lg border"
+                      />
+                    ))}
+                  </div>
+                );
               })()}
             </div>
             {/* Content */}
@@ -515,6 +530,7 @@ function AdminAnnouncements(){
   );
 }
 
+/** Small empty-state placeholder */
 function EmptyState(){
   return (
     <div className="p-8 rounded border text-center text-gray-600 bg-white">
@@ -524,8 +540,10 @@ function EmptyState(){
   );
 }
 
+/** Capitalize helper */
 function capitalize(s){ return String(s||'').charAt(0).toUpperCase()+String(s||'').slice(1); }
 
+/** Badge color palette by status */
 function badgeColor(status){
   const key = String(status || '').toLowerCase();
   switch (key) {
@@ -548,20 +566,43 @@ function badgeColor(status){
   }
 }
 
+/** Resolve announcement images preferring signed → urls → mediaUrl(keys) */
+function resolveAnnouncementImages(a){
+  if (Array.isArray(a.imageSignedUrls) && a.imageSignedUrls.length) return a.imageSignedUrls;
+  if (Array.isArray(a.imageUrls) && a.imageUrls.length) return a.imageUrls;
+  if (Array.isArray(a.imageKeys) && a.imageKeys.length) return a.imageKeys.map(k => mediaUrl(k));
+  return [];
+}
+
+/**
+ * ImagePicker
+ * - Uploads up to 3 images via presigned PUT
+ * - Shows immediate objectURL previews, keyed by S3 key
+ * - Uses signedUrlsByKey or mediaUrl fallback for existing keys
+ */
 function ImagePicker({ images, onChange, signedUrlsByKey = {} }){
   const [uploading, setUploading] = useState(false);
-  const [localPreviews, setLocalPreviews] = useState([]);
+  const [previewMap, setPreviewMap] = useState({}); // { [key:string]: objectUrl }
+  React.useEffect(() => () => {
+    // cleanup object URLs on unmount
+    Object.values(previewMap).forEach(u => { try { URL.revokeObjectURL(u); } catch {} });
+  }, []);
 
   async function handleFile(file){
     if (!file) return;
     if (!['image/png','image/jpeg','image/webp'].includes(file.type)) return alert('Only PNG/JPEG/WebP allowed');
     if (file.size > 5*1024*1024) return alert('Max size 5MB');
+    if ((images||[]).length >= 3) return;
     try {
       setUploading(true);
-      const objectUrl = URL.createObjectURL(file);
-      setLocalPreviews(prev => [...prev, objectUrl].slice(0,3));
+      // get key first
       const { uploadUrl, key } = await presignImageUpload(file.type, file.size);
+      // set immediate local preview for that key
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewMap(prev => ({ ...prev, [key]: objectUrl }));
+      // upload
       await putFile(uploadUrl, file, file.type);
+      // append key to images (cap 3)
       onChange([...(images||[]), key].slice(0,3));
     } catch (err) {
       const msg = err?.response?.data?.message || err?.message || 'Upload failed';
@@ -586,11 +627,15 @@ function ImagePicker({ images, onChange, signedUrlsByKey = {} }){
 
   function removeAt(i){
     const next = (images||[]).slice();
-    next.splice(i,1);
+    const [removed] = next.splice(i,1);
     onChange(next);
-    const nextPrev = (localPreviews||[]).slice();
-    nextPrev.splice(i,1);
-    setLocalPreviews(nextPrev);
+    if (removed && previewMap[removed]) {
+      try { URL.revokeObjectURL(previewMap[removed]); } catch {}
+    }
+    setPreviewMap(pm => {
+      const { [removed]: _, ...rest } = pm || {};
+      return rest;
+    });
   }
 
   const canAdd = (images||[]).length < 3;
@@ -615,8 +660,7 @@ function ImagePicker({ images, onChange, signedUrlsByKey = {} }){
               {(images||[]).map((key, i) => (
                 <div key={`${key}-${i}`} className="relative">
                   {(() => {
-                    const k = (images||[])[i];
-                    const src = localPreviews[i] || (k && signedUrlsByKey[k]) || (k ? mediaUrl(k) : null);
+                    const src = previewMap[key] || (signedUrlsByKey?.[key]) || (key ? mediaUrl(key) : null);
                     if (src) {
                       return <img src={src} alt={`Image ${i+1}`} className="w-28 h-28 object-cover rounded border" />;
                     }

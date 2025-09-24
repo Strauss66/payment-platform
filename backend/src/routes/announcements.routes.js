@@ -1,3 +1,9 @@
+/**
+ * Announcements routes
+ * - Create, update, list, delete announcements for a school
+ * - Enforces tenancy and roles via middleware
+ * - Signs media keys for clients; deletes S3 media on hard delete (best effort)
+ */
 import { Router } from 'express';
 import { z } from 'zod';
 import { Op } from 'sequelize';
@@ -9,6 +15,7 @@ import { validateAnnouncement, computeStatus, audienceSummary } from '../validat
 import { emitAudit } from '../services/audit.service.js';
 import { inboundDtoToModel, modelToOutboundDto } from '../mappers/announcementMapper.js';
 import { signKeys } from '../utils/mediaSigner.js';
+import { deleteAnnouncementKeys } from "../utils/mediaDelete.js";
 
 const r = Router();
 
@@ -16,7 +23,7 @@ const upsertSchema = z.any();
 
 // mapSignedMedia is imported from utils; no local helpers needed
 
-// POST /api/announcements
+// POST /api/announcements - create announcement
 r.post('/', requireAuth, tenantScope, requireSameSchool, requireRoles('admin','super_admin'), async (req, res) => {
   try {
     const schoolId = req.context?.schoolId ?? req.user.school_id;
@@ -70,7 +77,7 @@ r.post('/', requireAuth, tenantScope, requireSameSchool, requireRoles('admin','s
   }
 });
 
-// PUT /api/announcements/:id
+// PUT /api/announcements/:id - update announcement (no media deletion here)
 r.put('/:id', requireAuth, tenantScope, requireSameSchool, requireRoles('admin','super_admin'), async (req, res) => {
   try {
     const schoolId = req.context?.schoolId ?? req.user.school_id;
@@ -125,24 +132,41 @@ r.put('/:id', requireAuth, tenantScope, requireSameSchool, requireRoles('admin',
   }
 });
 
-// DELETE /api/announcements/:id (hard delete)
+// DELETE /api/announcements/:id - hard delete; best-effort media cleanup under announcements prefix
 r.delete('/:id', requireAuth, tenantScope, requireSameSchool, requireRoles('admin','super_admin'), async (req, res) => {
   try {
     const schoolId = req.context?.schoolId ?? req.user.school_id;
     const id = Number(req.params.id);
-    const ann = await Announcement.findByPk(id);
-    if (!ann || Number(ann.school_id) !== Number(schoolId)) return res.status(404).json({ code: 'NOT_FOUND' });
-    const before = ann.toJSON();
-    await Announcement.destroy({ where: { id } });
+    const row = await Announcement.findOne({ where: { id, school_id: schoolId } });
+    if (!row) return res.status(404).json({ code: 'NOT_FOUND' });
+
+    const before = row.toJSON();
+    // capture keys before destroying
+    const json = row.get({ plain: true });
+    const keys = Array.isArray(json.image_keys) ? json.image_keys : [];
+
+    await row.destroy();
     await emitAudit({ schoolId, actorUserId: req.user.id, entity: 'announcement', entityId: id, action: 'delete', before, after: null });
-    return res.json({ ok: true });
+
+    // best-effort media delete (can be toggled off)
+    if (process.env.DELETE_MEDIA_ON_ANNOUNCEMENT_DELETE !== 'false' && keys.length) {
+      if (process.env.DEBUG) {
+        console.debug('[ANN:delete] attempting media delete', { id, schoolId, keysCount: keys.length, sample: keys.slice(0,3) });
+      }
+      const { deleted, errors } = await deleteAnnouncementKeys(keys, schoolId);
+      if (errors?.length) {
+        console.warn('[announcements:delete-media] errors', { id, schoolId, errors });
+      }
+      return res.json({ ok: true, id, mediaDeleted: deleted, mediaErrors: errors?.length || 0 });
+    }
+    return res.json({ ok: true, id, mediaDeleted: 0, mediaErrors: 0 });
   } catch (err) {
     console.error('delete announcement failed', err);
     return res.status(500).json({ code: 'INTERNAL_ERROR' });
   }
 });
 
-// GET /api/announcements (admin index for tenant)
+// GET /api/announcements - admin index for tenant (includes signed media URLs)
 r.get('/', requireAuth, tenantScope, requireSameSchool, requireRoles('admin','super_admin','cashier','teacher'), async (req, res) => {
   try {
     const schoolId = req.context?.schoolId ?? req.user.school_id;
