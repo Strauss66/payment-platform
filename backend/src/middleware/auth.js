@@ -27,7 +27,7 @@ export function requireAuth(req, res, next) {
   try {
     const secret = process.env.JWT_SECRET || jwtConfig.jwt_secret || 'fallback-secret';
     const payload = jwt.verify(token, secret);
-    req.user = payload; // { id, school_id, roles: [] }
+    req.user = payload; // { id, school_id, defaultSchoolId, roles: [] }
     return next();
   } catch {
     return res.status(401).json({ message: 'Invalid token' });
@@ -39,7 +39,7 @@ export function signJwt(user) {
   const expiresIn = process.env.JWT_EXPIRES_IN || jwtConfig.jwt_expires_in || '12h';
   
   return jwt.sign(
-    { id: user.id, school_id: user.school_id, roles: user.roles || [] },
+    { id: user.id, school_id: user.school_id, defaultSchoolId: user.defaultSchoolId, roles: user.roles || [] },
     secret,
     { expiresIn }
   );

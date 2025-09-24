@@ -6,6 +6,11 @@ import RoleGate from '../../app/guards/RoleGate';
 import { ROLES } from '../../contexts/AuthContext';
 import { listInvoices, NoTenantError } from '../../lib/api.billing';
 import Button from '../../components/ui/Button';
+import Badge from '../../components/ui/Badge.jsx';
+import CFDIPreviewModal from '../../components/billing/CFDIPreviewModal.jsx';
+import CFDICancelModal from '../../components/billing/CFDICancelModal.jsx';
+import { downloadInvoiceCFDIXml, downloadInvoiceCFDIPdf } from '../../lib/api.billing.js';
+import { saveBlob } from '../../lib/file.js';
 import { Table, THead, TR, TD } from '../../components/ui/Table';
 
 function useDebounced(value, ms){
@@ -20,6 +25,8 @@ export default function InvoicesPage(){
   const [state, setState] = useState('idle');
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
+  const [previewId, setPreviewId] = useState(null);
+  const [cancelId, setCancelId] = useState(null);
 
   const status = searchParams.get('status') || 'open';
   const q = searchParams.get('q') || '';
@@ -112,7 +119,7 @@ export default function InvoicesPage(){
           ) : rows.length === 0 ? (
             <Empty/> 
           ) : (
-            <Table head={<THead sticky columns={[{label:'Student/Family'}, {label:'Concept'}, {label:'Due Date'}, {label:'Subtotal', right:true}, {label:'Paid', right:true}, {label:'Balance', right:true}, {label:'Status'}, {label:'Actions'}]} />}>
+            <Table head={<THead sticky columns={[{label:'Student/Family'}, {label:'Concept'}, {label:'Due Date'}, {label:'Subtotal', right:true}, {label:'Paid', right:true}, {label:'Balance', right:true}, {label:'CFDI Status'}, {label:'Actions'}]} />}>
               {rows.map((r) => (
                 <TR key={r.id}>
                   <TD>#{r.student_id}</TD>
@@ -121,8 +128,8 @@ export default function InvoicesPage(){
                   <TD right>${Number(r.subtotal ?? r.total ?? 0).toFixed(2)}</TD>
                   <TD right>${Number(r.paid ?? 0).toFixed(2)}</TD>
                   <TD right>${Number(r.balance ?? 0).toFixed(2)}</TD>
-                  <TD>{r.status}</TD>
-                  <TD><button className="text-blue-600 underline text-sm">Open</button></TD>
+                  <TD>{renderCfdiChip(r)}</TD>
+                  <TD>{renderActions(r)}</TD>
                 </TR>
               ))}
             </Table>
@@ -140,6 +147,30 @@ export default function InvoicesPage(){
     </ProtectedRoute>
   );
 }
+function renderCfdiChip(r){
+  const s = r.cfdi_status || 'none';
+  if (s === 'stamped') return <Badge color="green">Stamped</Badge>;
+  if (s === 'canceled') return <Badge color="red">Canceled</Badge>;
+  if (s === 'draft') return <Badge color="indigo">Draft</Badge>;
+  return <Badge color="gray">None</Badge>;
+}
+
+function InvoicesPageActions({ row, onPreview, onCancel, refresh }){
+  async function download(kind){
+    if (kind === 'xml') { const blob = await downloadInvoiceCFDIXml(row.id); saveBlob(blob, `FAC-${row.id}.xml`); }
+    if (kind === 'pdf') { const blob = await downloadInvoiceCFDIPdf(row.id); saveBlob(blob, `FAC-${row.id}.pdf`); }
+  }
+  return (
+    <div className="flex gap-2 text-sm">
+      <button className="text-blue-600 underline" onClick={()=>onPreview(row.id)}>Preview</button>
+      {row.cfdi_status !== 'stamped' && <button className="text-green-600 underline" onClick={()=>onPreview(row.id)}>Stamp</button>}
+      {row.cfdi_status === 'stamped' && <button className="text-indigo-600 underline" onClick={()=>download('xml')}>XML</button>}
+      {row.cfdi_status === 'stamped' && <button className="text-indigo-600 underline" onClick={()=>download('pdf')}>PDF</button>}
+      {row.cfdi_status === 'stamped' && <button className="text-red-600 underline" onClick={()=>onCancel(row.id)}>Cancel</button>}
+    </div>
+  );
+}
+
 
 function TableSkeleton(){
   return (

@@ -14,9 +14,18 @@ export function AuthProvider({ children }) {
     api.get('/api/auth/me').then(({ data }) => {
       setUser(data);
       try { localStorage.setItem('user.roles', JSON.stringify(data?.roles || [])); } catch {}
-      // If no longer superadmin, ensure tenant.schoolId is cleared
-      if (!(data?.roles || []).includes('super_admin')) {
-        localStorage.removeItem('tenant.schoolId');
+      // Always set tenant.schoolId to default for non-superadmin
+      const isSuper = (data?.roles || []).includes('super_admin');
+      if (!isSuper) {
+        if (data?.defaultSchoolId) {
+          localStorage.setItem('tenant.schoolId', String(data.defaultSchoolId));
+        }
+      } else {
+        // Superadmin: if feature flag not set, default to defaultSchoolId when present
+        const allowSwitch = String(process.env.REACT_APP_ALLOW_SCHOOL_SWITCH || 'false').toLowerCase() === 'true';
+        if (!allowSwitch && data?.defaultSchoolId) {
+          localStorage.setItem('tenant.schoolId', String(data.defaultSchoolId));
+        }
       }
     }).catch(() => {
       localStorage.removeItem('token');
@@ -31,9 +40,15 @@ export function AuthProvider({ children }) {
     const me = await api.get('/api/auth/me');
     setUser(me.data);
     try { localStorage.setItem('user.roles', JSON.stringify(me.data?.roles || [])); } catch {}
-    // On role change to non-superadmin, drop tenant selection
-    if (!(me.data?.roles || []).includes('super_admin')) {
-      localStorage.removeItem('tenant.schoolId');
+    // Lock tenant.schoolId for non-superadmin
+    const isSuper = (me.data?.roles || []).includes('super_admin');
+    if (!isSuper && me.data?.defaultSchoolId) {
+      localStorage.setItem('tenant.schoolId', String(me.data.defaultSchoolId));
+    } else {
+      const allowSwitch = String(process.env.REACT_APP_ALLOW_SCHOOL_SWITCH || 'false').toLowerCase() === 'true';
+      if (!allowSwitch && me.data?.defaultSchoolId) {
+        localStorage.setItem('tenant.schoolId', String(me.data.defaultSchoolId));
+      }
     }
     return me.data;
   };

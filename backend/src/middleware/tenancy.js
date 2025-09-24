@@ -1,35 +1,38 @@
 import { ROLES } from '../utils/roles.js';
 
-export function requireSameSchool(req, res, next) {
-  req.scope = { school_id: req.user.school_id };
-  next();
-}
-
-export function tenantScope(req, res, next) {
+// Default tenancy middleware: sets req.schoolId and mirrors to req.context.schoolId
+export default function tenancy(req, res, next) {
   const user = req.user || {};
-  const allowHeaderSwitch = String(process.env.TENANCY_ALLOW_HEADER_SWITCH || 'false').toLowerCase() === 'true';
-  const isSuperAdmin = (user.roles || []).includes(ROLES.SUPER_ADMIN) || (user.roles || []).includes('super_admin');
+  const hdr = req.header('X-School-Id');
+  const roles = user.roles || [];
+  const isSuper = roles.includes(ROLES.SUPER_ADMIN) || roles.includes('super_admin');
 
-  if (!isSuperAdmin) {
-    req.context = { ...(req.context || {}), schoolId: user.school_id };
+  if (isSuper) {
+    const sid = hdr || user.defaultSchoolId || null;
+    req.schoolId = sid ? Number(sid) : null;
+    req.context = { ...(req.context || {}), schoolId: req.schoolId };
     return next();
   }
 
-  // superadmin path
-  let requested = null;
-  const path = req.path || '';
-  if (allowHeaderSwitch) {
-    requested = req.header('X-School-Id') || req.query.schoolId || null;
+  const forced = user.defaultSchoolId || user.school_id || null;
+  if (!forced) {
+    return res.status(400).json({ message: 'No default school assigned to this account.' });
   }
-  // If switching not allowed, only /api/tenancy/schools* can be cross-school without explicit scoping
-  if (!allowHeaderSwitch && !path.startsWith('/schools')) {
-    if (!requested) {
-      return res.status(400).json({ message: 'schoolId required for this operation' });
-    }
-  }
-  req.context = { ...(req.context || {}), schoolId: requested ? Number(requested) : null };
+  req.schoolId = Number(forced);
+  req.context = { ...(req.context || {}), schoolId: req.schoolId };
   return next();
 }
+
+export function requireSameSchool(req, res, next) {
+  const forced = (req.context && req.context.schoolId) || req.user.defaultSchoolId || req.user.school_id;
+  if (!forced) {
+    return res.status(400).json({ message: 'User has no school context' });
+  }
+  req.scope = { school_id: Number(forced) };
+  next();
+}
+
+export function tenantScope(req, res, next) { return tenancy(req, res, next); }
 
 export function withSchool(query, schoolId) {
   const base = query || {};

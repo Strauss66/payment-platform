@@ -30,11 +30,12 @@ export const School = sequelize.define('schools', {
 export const User = sequelize.define('users', {
   id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
   school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  default_school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
   email: { type: DataTypes.STRING(160), allowNull: false },
   username: { type: DataTypes.STRING(100) },
   password_hash: { type: DataTypes.STRING(255), allowNull: false },
   status: { type: DataTypes.ENUM('active','disabled'), defaultValue: 'active' }
-}, { tableName: 'users' });
+}, { tableName: 'users', underscored: true });
 
 export const UserRole = sequelize.define('user_roles', {
   user_id: { type: DataTypes.BIGINT.UNSIGNED, primaryKey: true },
@@ -69,6 +70,18 @@ Role.belongsToMany(User, {
   as: 'users'
 });
 
+// User-School relations (many-to-many) + default school
+export const UserSchool = sequelize.define('user_schools', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  user_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  is_primary: { type: DataTypes.TINYINT, allowNull: false, defaultValue: 0 }
+}, { tableName: 'user_schools', underscored: true });
+
+User.belongsToMany(School, { through: UserSchool, foreignKey: 'user_id', otherKey: 'school_id', as: 'schools' });
+School.belongsToMany(User, { through: UserSchool, foreignKey: 'school_id', otherKey: 'user_id', as: 'users' });
+User.belongsTo(School, { as: 'defaultSchool', foreignKey: 'default_school_id' });
+
 // Dashboard layout persistence per user and school
 export const DashboardLayout = sequelize.define('dashboard_layouts', {
   id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
@@ -89,6 +102,7 @@ export const Student = sequelize.define('students', {
   school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
   // allowNull true to avoid migration failure on existing rows; association still links to users
   user_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
+  level_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
   first_name: { type: DataTypes.STRING(255), allowNull: false },
   last_name: { type: DataTypes.STRING(255), allowNull: false },
   age: { type: DataTypes.INTEGER },
@@ -131,7 +145,19 @@ export const InvoicingEntity = sequelize.define('invoicing_entities', {
   email: { type: DataTypes.STRING(191) },
   phone: { type: DataTypes.STRING(32) },
   address_json: { type: DataTypes.JSON },
-  is_default: { type: DataTypes.TINYINT, allowNull: false, defaultValue: 0 }
+  is_default: { type: DataTypes.TINYINT, allowNull: false, defaultValue: 0 },
+  // CFDI 4.0
+  rfc: { type: DataTypes.STRING(13) },
+  regimen_fiscal: { type: DataTypes.STRING(4) },
+  csd_cert_b64: { type: DataTypes.TEXT('long') },
+  csd_key_enc: { type: DataTypes.TEXT('long') },
+  csd_key_iv: { type: DataTypes.BLOB('tiny') },
+  csd_pass_enc: { type: DataTypes.TEXT('long') },
+  pac_provider: { type: DataTypes.STRING(32) },
+  pac_credentials: { type: DataTypes.JSON },
+  cert_serial: { type: DataTypes.STRING(40) },
+  cert_valid_from: { type: DataTypes.DATE },
+  cert_valid_to: { type: DataTypes.DATE }
 }, { tableName: 'invoicing_entities', underscored: true });
 
 export const CashRegister = sequelize.define('cash_registers', {
@@ -218,3 +244,74 @@ Payment.belongsTo(CashSession, { foreignKey: 'session_id', as: 'session' });
 
 // Link invoices to students for search/join needs
 Invoice.belongsTo(Student, { foreignKey: 'student_id', as: 'student' });
+
+// --- Tax identities (receptors) ---
+export const TaxIdentity = sequelize.define('tax_identities', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  family_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
+  student_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
+  type: { type: DataTypes.ENUM('family','student'), allowNull: false, defaultValue: 'family' },
+  rfc: { type: DataTypes.STRING(13), allowNull: false },
+  name: { type: DataTypes.STRING(200), allowNull: false },
+  uso_cfdi: { type: DataTypes.STRING(3), allowNull: false },
+  regimen_fiscal_receptor: { type: DataTypes.STRING(4), allowNull: true },
+  postal_code: { type: DataTypes.STRING(5), allowNull: false }
+}, { tableName: 'tax_identities', underscored: true });
+
+TaxIdentity.belongsTo(Student, { foreignKey: 'student_id', as: 'student', constraints: false });
+
+// --- Invoice CFDI status ---
+export const InvoiceCfdi = sequelize.define('invoice_cfdi', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  invoice_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  status: { type: DataTypes.ENUM('none','draft','stamped','canceled'), allowNull: false, defaultValue: 'none' },
+  uuid: { type: DataTypes.STRING(36) },
+  stamped_at: { type: DataTypes.DATE },
+  canceled_at: { type: DataTypes.DATE },
+  serie: { type: DataTypes.STRING(25) },
+  folio: { type: DataTypes.STRING(40) },
+  xml: { type: DataTypes.TEXT('medium') },
+  tfd_xml: { type: DataTypes.TEXT('long') },
+  cancel_reason: { type: DataTypes.STRING(2) },
+  cancel_replacement_uuid: { type: DataTypes.STRING(36) },
+  qrcode_png: { type: DataTypes.BLOB('long') }
+}, { tableName: 'invoice_cfdi', underscored: true });
+
+Invoice.hasOne(InvoiceCfdi, { foreignKey: 'invoice_id', as: 'cfdi' });
+InvoiceCfdi.belongsTo(Invoice, { foreignKey: 'invoice_id', as: 'invoice' });
+
+// --- Announcements and Audit ---
+export const Announcement = sequelize.define('announcements', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  title: { type: DataTypes.STRING(200), allowNull: false },
+  body: { type: DataTypes.TEXT, allowNull: false },
+  category: { type: DataTypes.ENUM('payments','events','activities','other'), allowNull: false },
+  audience_type: { type: DataTypes.ENUM('school','section','class','student'), allowNull: false },
+  sections: { type: DataTypes.JSON },
+  class_ids: { type: DataTypes.JSON },
+  student_ids: { type: DataTypes.JSON },
+  role_keys: { type: DataTypes.JSON },
+  image_keys: { type: DataTypes.JSON },
+  image_urls: { type: DataTypes.JSON },
+  image_alts: { type: DataTypes.JSON },
+  starts_at: { type: DataTypes.DATE, allowNull: false },
+  ends_at: { type: DataTypes.DATE },
+  created_by: { type: DataTypes.BIGINT.UNSIGNED },
+  updated_by: { type: DataTypes.BIGINT.UNSIGNED }
+}, { tableName: 'announcements', underscored: true });
+Announcement.belongsTo(School, { foreignKey: 'school_id', as: 'school' });
+
+export const AuditLog = sequelize.define('audit_logs', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  actor_user_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  entity: { type: DataTypes.STRING(64), allowNull: false },
+  entity_id: { type: DataTypes.BIGINT, allowNull: false },
+  action: { type: DataTypes.STRING(32), allowNull: false },
+  before_json: { type: DataTypes.JSON },
+  after_json: { type: DataTypes.JSON },
+  created_at: { type: DataTypes.DATE }
+}, { tableName: 'audit_logs', timestamps: false, underscored: true });

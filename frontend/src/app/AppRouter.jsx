@@ -20,6 +20,7 @@ import CloseoutPage from '../pages/Cashier/CloseoutPage.jsx';
 // no hooks inside DashboardRoute to avoid hook-order issues on initial mounts
 import CoursesDashboard from '../pages/StudentParent/CoursesDashboard';
 import StubPage from '../pages/features/StubPage';
+import AnnouncementsPage from '../pages/features/AnnouncementsPage.jsx';
 import InvoicingEntitiesPage from '../pages/Admin/billing/InvoicingEntitiesPage';
 import CashRegistersPage from '../pages/Admin/billing/CashRegistersPage';
 import CashierPanel from '../pages/Cashier/CashierPanel.jsx';
@@ -29,6 +30,7 @@ import TeachersPage from '../pages/people/TeachersPage.jsx';
 import EmployeesPage from '../pages/people/EmployeesPage.jsx';
 import UsersRolesPage from '../pages/people/UsersRolesPage.jsx';
 import OrgPreferencesPage from '../pages/settings/OrgPreferencesPage.jsx';
+import EmitterCFDIPage from '../pages/settings/EmitterCFDIPage.jsx';
 import GlobalPreferencesPage from '../pages/settings/GlobalPreferencesPage.jsx';
 import AudienceFlagsPage from '../pages/settings/AudienceFlagsPage.jsx';
 import InvoicesPage from '../pages/billing/InvoicesPage.jsx'
@@ -51,7 +53,7 @@ export default function AppRouter() {
         <Route index element={<DashboardRoute />} />
         <Route path="dashboard" element={<DashboardRoute />} />
         <Route path="activity" element={<StubPage title="Activity" />} />
-        <Route path="announcements" element={<StubPage title="Announcements" />} />
+        <Route path="announcements" element={<AnnouncementsPage />} />
         <Route path="portal" element={<PortalDashboardPage />} />
         <Route path="courses" element={<CoursesDashboard />} />
         <Route path="schedule" element={<StubPage title="Class Schedule" />} />
@@ -182,6 +184,13 @@ export default function AppRouter() {
             <ProtectedRoute>
               <RoleGate allow={["admin","super_admin"]}>
                 <GlobalPreferencesPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="emitter-cfdi" element={
+            <ProtectedRoute>
+              <RoleGate allow={["admin","super_admin"]}>
+                <EmitterCFDIPage />
               </RoleGate>
             </ProtectedRoute>
           } />

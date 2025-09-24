@@ -35,7 +35,7 @@ describe('RBAC and tenant scoping', () => {
   });
 
   test('admin without school switch header is scoped to own school', async () => {
-    const t = token({ id: 2, school_id: 10, roles: ['admin'] });
+    const t = token({ id: 2, school_id: 10, defaultSchoolId: 10, roles: ['admin'] });
     // This will fail downstream because service needs DB, but we only assert middleware ran and reached service
     const res = await request(app)
       .post('/api/invoices')
@@ -47,7 +47,7 @@ describe('RBAC and tenant scoping', () => {
 
   test('superadmin without X-School-Id when switching not allowed -> 400', async () => {
     process.env.TENANCY_ALLOW_HEADER_SWITCH = 'false';
-    const t = token({ id: 3, school_id: 999, roles: ['super_admin'] });
+    const t = token({ id: 3, school_id: 999, defaultSchoolId: 999, roles: ['super_admin'] });
     const res = await request(app)
       .post('/api/invoices')
       .set('Authorization', `Bearer ${t}`)

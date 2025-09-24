@@ -164,3 +164,58 @@ export async function listAudienceFlags() { ensureTenant(); const { data } = awa
 export async function updateAudienceFlags(payload) { ensureTenant(); const { data } = await api.put('/api/settings/flags', payload); return data; }
 
 
+// --- CFDI helpers ---
+export async function updateEmitterCFDI(id, payload) {
+  ensureTenant();
+  const { data } = await api.put(`/api/billing/invoicing-entities/${id}/cfdi-credentials`, payload);
+  return data;
+}
+
+export async function testStampEmitterCFDI(id) {
+  ensureTenant();
+  const { data } = await api.post(`/api/billing/invoicing-entities/${id}/test-stamp`);
+  return data;
+}
+
+export async function getInvoiceCFDIPreview(invoiceId) {
+  ensureTenant();
+  const { data } = await api.get(`/api/billing/invoices/${invoiceId}/cfdi/preview`);
+  return data; // { xmlDraft, totals, meta }
+}
+
+export async function stampInvoiceCFDI(invoiceId) {
+  ensureTenant();
+  const { data } = await api.post(`/api/billing/invoices/${invoiceId}/cfdi/stamp`);
+  return data; // { uuid, stampedAt, status }
+}
+
+export async function cancelInvoiceCFDI(invoiceId, body) {
+  ensureTenant();
+  const { data } = await api.post(`/api/billing/invoices/${invoiceId}/cfdi/cancel`, body || {});
+  return data;
+}
+
+export async function downloadInvoiceCFDIXml(invoiceId) {
+  ensureTenant();
+  const { data } = await api.get(`/api/billing/invoices/${invoiceId}/cfdi/xml`, { responseType: 'blob' });
+  return data;
+}
+
+export async function downloadInvoiceCFDIPdf(invoiceId) {
+  ensureTenant();
+  const { data } = await api.get(`/api/billing/invoices/${invoiceId}/cfdi/pdf`, { responseType: 'blob' });
+  return data;
+}
+
+export async function getFamilyTaxIdentity(familyId) {
+  ensureTenant();
+  const { data } = await api.get(`/api/tax-identities/families/${familyId}`);
+  return data;
+}
+
+export async function upsertFamilyTaxIdentity(familyId, payload) {
+  ensureTenant();
+  const { data } = await api.put(`/api/tax-identities/families/${familyId}`, payload);
+  return data;
+}
+

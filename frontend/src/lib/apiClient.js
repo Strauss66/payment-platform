@@ -9,10 +9,19 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
 
-  // Always try to attach X-School-Id when present in localStorage
-  // Backend will ignore/override for non-superadmins
-  const id = localStorage.getItem('tenant.schoolId');
-  if (id) config.headers['X-School-Id'] = id;
+  // Restrict X-School-Id to super_admin and non-auth endpoints
+  const url = config.url || '';
+  const isAuthEndpoint = typeof url === 'string' && url.startsWith('/api/auth/');
+  let roles = [];
+  try { const raw = localStorage.getItem('user.roles'); roles = Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : []; } catch {}
+  const isSuper = Array.isArray(roles) && roles.includes('super_admin');
+  if (isSuper && !isAuthEndpoint) {
+    const id = localStorage.getItem('tenant.schoolId');
+    if (id) config.headers['X-School-Id'] = id;
+    else delete config.headers['X-School-Id'];
+  } else {
+    delete config.headers['X-School-Id'];
+  }
 
   return config;
 });

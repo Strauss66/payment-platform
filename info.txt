@@ -1,31 +1,13 @@
-email: 'cashier@default.local',
-username: 'cashier',
-password: 'Cashier123!',
-role: cashierRole
+All users are assigned to the single school: Weglon Test School
 
-email: 'teacher@default.local',
-username: 'teacher',
-password: 'Teacher123!',
-role: teacherRole
+Logins:
+- Super admin: superadmin@weglon.test / Superadmin123!
+- Admin: admin@weglon.test / Admin123!
+- Cashier: cashier@weglon.test / Cashier123!
+- Teacher: teacher@weglon.test / Teacher123!
+- Student: student@weglon.test / Student123!
+- Parent: parent@weglon.test / Parent123!
 
-email: 'student@default.local',
-username: 'student',
-password: 'Student123!',
-role: studentParentRole
-
-email: 'parent@default.local',
-username: 'parent',
-password: 'Parent123!',
-role: studentParentRole
-
-// Additional convenience accounts to match info.txt and docs
-
-email: 'student@weglon.test',
-username: 'student-weglon',
-password: 'Student123!',
-role: studentParentRole
-
-email: 'parent@weglon.test',
-username: 'parent-weglon',
-password: 'Parent123!',
-role: studentParentRole
+Notes:
+- Non-superadmin always uses their default school; no switching.
+- Superadmin may switch only if REACT_APP_ALLOW_SCHOOL_SWITCH=true; otherwise defaults to their default school.

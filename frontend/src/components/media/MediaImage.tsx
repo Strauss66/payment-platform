@@ -1,5 +1,5 @@
 import React from "react";
-import { MEDIA_BASE_URL } from "../../";
+import { MEDIA_BASE_URL } from "../../lib/env";
 
 type Props = { keyName: string; alt: string; widths?: number[]; className?: string };
 export default function MediaImage({ keyName, alt, widths = [480, 768, 1280], className }: Props) {

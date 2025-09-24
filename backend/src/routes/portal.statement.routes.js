@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { requireSameSchool } from '../middleware/tenancy.js';
 import { ROLES } from '../utils/roles.js';
-import { Invoice, Student, User } from '../models/index.js';
+import { Invoice, Student, User, Enrollment, Announcement } from '../models/index.js';
 import { computeLateFee } from '../services/billing/lateFee.js';
 
 const r = Router();
@@ -123,6 +123,97 @@ r.get('/my-students', requireAuth, requireSameSchool, async (req, res) => {
   }
 });
 
+// GET /api/portal/announcements
+r.get('/announcements', requireAuth, requireSameSchool, async (req, res) => {
+  try {
+    const schoolId = Number(req.user.school_id);
+    const roles = req.user?.roles || [];
+    const now = new Date();
+    const from = req.query.from ? new Date(String(req.query.from)) : null;
+    const to = req.query.to ? new Date(String(req.query.to)) : null;
+    const limit = Math.min(Number(req.query.limit || 20), 100);
+    const offset = Math.max(Number(req.query.offset || 0), 0);
+    const type = req.query.type ? String(req.query.type) : null;
+
+    // Base active window filter
+    const base = { school_id: schoolId };
+    const candidates = await Announcement.findAll({ where: base, order: [['starts_at','DESC'], ['id','DESC']] });
+
+    let visible = [];
+    const isAdminish = roles.includes('admin') || roles.includes('cashier') || roles.includes('super_admin');
+    if (isAdminish) {
+      visible = candidates;
+    } else if (roles.includes('teacher')) {
+      // teacher: school-wide + classes they teach (if relation exists; here: class.teacher_id matches user.id)
+      const teacherClassIds = (await Enrollment.findAll({ where: { }, limit: 0 })).map(() => -1); // placeholder; no teacher-class model, fallback to school-wide only
+      visible = candidates.filter((a) => a.audience_scope === 'all');
+    } else {
+      // student or parent scope
+      const myStudents = [];
+      const selfStudent = await Student.findOne({ where: { school_id: schoolId, user_id: req.user.id } });
+      if (selfStudent) myStudents.push(selfStudent);
+      const allStudents = await Student.findAll({ where: { school_id: schoolId } });
+      for (const s of allStudents) {
+        const ok = await isParentAuthorizedForStudent(req.user, s);
+        if (ok) myStudents.push(s);
+      }
+      const uniqStudents = Array.from(new Map(myStudents.map(s => [s.id, s])).values());
+      const studentIds = uniqStudents.map(s => Number(s.id));
+      const levelIds = uniqStudents.map(s => Number(s.level_id)).filter(Boolean);
+      const classIds = [];
+      if (studentIds.length) {
+        const enrolls = await Enrollment.findAll({ where: { student_id: studentIds } });
+        classIds.push(...enrolls.map(e => Number(e.class_id)));
+      }
+
+      visible = candidates.filter((a) => {
+        const isActive = (!a.starts_at || new Date(a.starts_at) <= now) && (!a.ends_at || now < new Date(a.ends_at));
+        if (!isActive) return false;
+        if (type && a.type !== type) return false;
+        if (from && new Date(a.starts_at || a.created_at) < from) return false;
+        if (to && new Date(a.starts_at || a.created_at) > to) return false;
+        if (a.audience_scope === 'all') return true;
+        if (a.audience_scope === 'levels') {
+          const targets = Array.isArray(a.target_level_ids) ? a.target_level_ids.map(Number) : [];
+          return targets.some((id) => levelIds.includes(Number(id)));
+        }
+        if (a.audience_scope === 'classes') {
+          const targets = Array.isArray(a.target_class_ids) ? a.target_class_ids.map(Number) : [];
+          return targets.some((id) => classIds.includes(Number(id)));
+        }
+        if (a.audience_scope === 'students') {
+          const targets = Array.isArray(a.target_student_ids) ? a.target_student_ids.map(Number) : [];
+          return targets.some((id) => studentIds.includes(Number(id)));
+        }
+        return false;
+      });
+    }
+
+    // Always treat active window for non-admin requestors
+    if (!roles.includes('admin') && !roles.includes('cashier') && !roles.includes('super_admin')) {
+      visible = visible.filter((a) => (!a.starts_at || new Date(a.starts_at) <= now) && (!a.ends_at || now < new Date(a.ends_at)));
+    }
+
+    const count = visible.length;
+    const paged = visible.slice(offset, offset + limit).map((a) => ({
+      id: a.id,
+      type: a.type,
+      title: a.title,
+      body: a.body,
+      starts_at: a.starts_at,
+      ends_at: a.ends_at,
+      audience_scope: a.audience_scope,
+      targets: {
+        levels: Array.isArray(a.target_level_ids) ? a.target_level_ids : [],
+        classes: Array.isArray(a.target_class_ids) ? a.target_class_ids : [],
+        students: Array.isArray(a.target_student_ids) ? a.target_student_ids : []
+      }
+    }));
+    return res.json({ rows: paged, count });
+  } catch (err) {
+    console.error('portal announcements failed', err);
+    return res.status(500).json({ code: 'INTERNAL_ERROR' });
+  }
+});
+
 export default r;
-
-

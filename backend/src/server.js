@@ -1,4 +1,5 @@
 import cors from "cors";
+import helmet, { contentSecurityPolicy } from "helmet";
 import express from "express";
 import dotenv from "dotenv";
 import path from "path";
@@ -9,6 +10,7 @@ import { User, Role, Permission, RolePermission, UserRole } from "./models/index
 import tenancyRoutes from "./routes/tenancy.routes.js";
 import adminCatalogRoutes from "./routes/admin.catalog.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import tenancy from "./middleware/tenancy.js";
 import healthRoutes from "./routes/health.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import coursesRoutes from "./routes/courses.routes.js";
@@ -19,6 +21,10 @@ import cashRegistersRoutes from "./routes/billing.cash-registers.routes.js";
 import cashierRoutes from "./routes/cashier.routes.js";
 import portalStatementRoutes from "./routes/portal.statement.routes.js";
 import auditRoutes from "./routes/audit.routes.js";
+import announcementsRoutes from "./routes/announcements.routes.js";
+import uploadsRoutes from "./routes/uploads.routes.js";
+import peopleRoutes from "./routes/people.routes.js";
+import diagRoutes from "./routes/diag.routes.js";
 import lateFeesRoutes from "./routes/billing.latefees.routes.js";
 import fs from "fs";
 
@@ -58,22 +64,40 @@ app.use(
 
 // Middleware
 app.use(express.json());
+// Content Security Policy for images (S3/CDN)
+const IMG_SOURCES = [
+  "'self'",
+  "data:",
+  "blob:",
+  "https://weglon-app-uploads.s3.us-east-1.amazonaws.com",
+  "https://*.s3.us-east-1.amazonaws.com",
+  "https://*.amazonaws.com",
+  process.env.CDN_BASE_URL || ""
+].filter(Boolean);
+const defaultDirectives = contentSecurityPolicy.getDefaultDirectives();
+const mergedDirectives = { ...defaultDirectives, 'img-src': IMG_SOURCES };
+app.use(helmet({ contentSecurityPolicy: { directives: mergedDirectives } }));
+// Tenancy context after auth is parsed in route-level; for global routes, we apply per-router
 
 // Register API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/health", healthRoutes);
-app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/dashboard", tenancy, dashboardRoutes);
 app.use("/api/courses", coursesRoutes);
 app.use("/api/tenancy", tenancyRoutes);
 app.use("/api/admin/catalog", adminCatalogRoutes);
-app.use("/api/billing/invoices", invoiceRoutes);
-app.use("/api/billing/payments", paymentRoutes);
-app.use("/api/billing/invoicing-entities", invoicingEntitiesRoutes);
-app.use("/api/billing/cash-registers", cashRegistersRoutes);
-app.use("/api/billing", cashierRoutes);
+app.use("/api/billing/invoices", tenancy, invoiceRoutes);
+app.use("/api/billing/payments", tenancy, paymentRoutes);
+app.use("/api/billing/invoicing-entities", tenancy, invoicingEntitiesRoutes);
+app.use("/api/billing/cash-registers", tenancy, cashRegistersRoutes);
+app.use("/api/billing", tenancy, cashierRoutes);
 app.use("/api/billing/late-fees", lateFeesRoutes);
-app.use("/api/portal", portalStatementRoutes);
+app.use("/api/portal", tenancy, portalStatementRoutes);
 app.use("/api/audit", auditRoutes);
+app.use("/api/announcements", announcementsRoutes);
+app.use("/api/uploads", uploadsRoutes);
+app.use("/api/people", peopleRoutes);
+app.use("/api/diag", diagRoutes);
 
 // API root endpoint
 app.get("/api", (req, res) => {

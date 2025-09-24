@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import { User, Role, UserRole } from '../models/index.js';
+import { User, Role, UserRole, School, UserSchool } from '../models/index.js';
 import { signJwt, requireAuth } from '../middleware/auth.js';
 
 const r = Router();
@@ -22,19 +22,31 @@ r.get('/', (req, res) => {
 // GET /api/auth/me - Get current user info (protected)
 r.get('/me', requireAuth, async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id);
+    const user = await User.findByPk(req.user.id, {
+      include: [
+        { model: School, as: 'defaultSchool' },
+        { model: School, as: 'schools', through: { attributes: [] } }
+      ]
+    });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
     const roles = await UserRole.findAll({ where: { user_id: user.id }, include: [{ model: Role, as: 'role' }] });
     const roleKeys = roles.map(ur => ur.role?.key_name).filter(Boolean);
+    // Auto-set defaultSchoolId when exactly one linked school exists
+    if (!user.default_school_id && user.schools && user.schools.length === 1) {
+      await user.update({ default_school_id: user.schools[0].id });
+      user.default_school_id = user.schools[0].id;
+    }
     
     res.json({
       id: user.id,
       email: user.email,
       username: user.username,
       school_id: user.school_id,
+      defaultSchoolId: user.default_school_id,
+      defaultSchool: user.defaultSchool ? { id: user.defaultSchool.id, name: user.defaultSchool.name, slug: user.defaultSchool.slug } : null,
+      schools: (user.schools || []).map(s => ({ id: s.id, name: s.name, slug: s.slug })),
       status: user.status,
       roles: roleKeys
     });
@@ -48,7 +60,7 @@ r.get('/me', requireAuth, async (req, res) => {
 r.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ where: { email }, include: [{ model: School, as: 'schools', through: { attributes: [] } }] });
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
     
     const ok = await bcrypt.compare(password, user.password_hash);
@@ -56,7 +68,11 @@ r.post('/login', async (req, res) => {
 
     const roles = await UserRole.findAll({ where: { user_id: user.id }, include: [{ model: Role, as: 'role' }] });
     const roleKeys = roles.map(ur => ur.role?.key_name).filter(Boolean);
-    const token = signJwt({ id: user.id, school_id: user.school_id, roles: roleKeys });
+    // Auto-set defaultSchoolId when exactly one linked school exists
+    if (!user.default_school_id && user.schools && user.schools.length === 1) {
+      await user.update({ default_school_id: user.schools[0].id });
+    }
+    const token = signJwt({ id: user.id, school_id: user.school_id, defaultSchoolId: user.default_school_id || (user.schools && user.schools.length === 1 ? user.schools[0].id : null), roles: roleKeys });
     
     res.json({ 
       token, 
@@ -64,7 +80,8 @@ r.post('/login', async (req, res) => {
         id: user.id, 
         email: user.email, 
         username: user.username,
-        school_id: user.school_id, 
+        school_id: user.school_id,
+        defaultSchoolId: user.default_school_id || (user.schools && user.schools.length === 1 ? user.schools[0].id : null),
         roles: roleKeys 
       } 
     });

@@ -105,6 +105,7 @@ export default function AppLayout() {
             <SidebarItem to="/app/settings/org" label="Org Preferences" collapsed={collapsed} />
             <SidebarItem to="/app/settings/global" label="Global Preferences" collapsed={collapsed} />
             <SidebarItem to="/app/settings/flags" label="Audience Flags" collapsed={collapsed} />
+            <SidebarItem to="/app/settings/emitter-cfdi" label="Emitter (CFDI)" collapsed={collapsed} />
           </CollapsibleSection>
 
           {/* Tools */}
@@ -133,7 +134,10 @@ export default function AppLayout() {
             </div>
             {/* Switcher + Icons */}
             <div className="flex items-center gap-3">
-              <TopbarSchoolSwitcher />
+              {/* Hide switcher for non-superadmin */}
+              {(user?.roles || []).includes('super_admin') && (
+                <TopbarSchoolSwitcher />
+              )}
               <button aria-label="Notifications" className="relative p-2 rounded hover:bg-[var(--surface-muted)]">
                 <Bell className="size-5 text-[var(--text-muted)]" />
                 <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center text-[10px] bg-[var(--warning)] text-white rounded-full w-4 h-4">1</span>

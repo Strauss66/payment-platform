@@ -1,0 +1,8 @@
+[
+  { "code": "01", "label": "Comprobante emitido con errores con relación" },
+  { "code": "02", "label": "Comprobante emitido con errores sin relación" },
+  { "code": "03", "label": "No se llevó a cabo la operación" },
+  { "code": "04", "label": "Operación nominativa relacionada en la factura global" }
+]
+
+

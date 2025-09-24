@@ -1,0 +1,12 @@
+[
+  { "code": "601", "label": "General de Ley Personas Morales" },
+  { "code": "603", "label": "Personas Morales con Fines no Lucrativos" },
+  { "code": "605", "label": "Sueldos y Salarios e Ingresos Asimilados a Salarios" },
+  { "code": "606", "label": "Arrendamiento" },
+  { "code": "608", "label": "Demás Ingresos" },
+  { "code": "612", "label": "Personas Físicas con Actividades Empresariales y Profesionales" },
+  { "code": "616", "label": "Sin obligaciones fiscales" },
+  { "code": "620", "label": "Sociedades Cooperativas de Producción" }
+]
+
+

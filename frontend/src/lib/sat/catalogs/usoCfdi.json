@@ -1,0 +1,8 @@
+[
+  { "code": "G01", "label": "Adquisición de mercancías" },
+  { "code": "G02", "label": "Devoluciones, descuentos o bonificaciones" },
+  { "code": "G03", "label": "Gastos en general" },
+  { "code": "P01", "label": "Por definir" }
+]
+
+

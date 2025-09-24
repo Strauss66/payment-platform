@@ -18,11 +18,19 @@ export function TenantProvider({ children }) {
     const roles = user.roles || [];
     const isSuper = roles.includes(ROLES.SUPER_ADMIN);
     if (!isSuper) {
-      setCurrentSchoolId(user.school_id);
-      try { localStorage.setItem('tenant.schoolId', String(user.school_id || '')); } catch {}
+      const sid = user.defaultSchoolId || user.school_id;
+      setCurrentSchoolId(sid || null);
+      try { if (sid) localStorage.setItem('tenant.schoolId', String(sid)); } catch {}
     } else {
-      const saved = localStorage.getItem('tenant.schoolId');
-      setCurrentSchoolId(saved ? Number(saved) : null);
+      const allowSwitch = String(process.env.REACT_APP_ALLOW_SCHOOL_SWITCH || 'false').toLowerCase() === 'true';
+      if (!allowSwitch && (user.defaultSchoolId || user.school_id)) {
+        const sid = user.defaultSchoolId || user.school_id;
+        setCurrentSchoolId(Number(sid));
+        try { localStorage.setItem('tenant.schoolId', String(sid)); } catch {}
+      } else {
+        const saved = localStorage.getItem('tenant.schoolId');
+        setCurrentSchoolId(saved ? Number(saved) : null);
+      }
     }
   }, [user]);
 

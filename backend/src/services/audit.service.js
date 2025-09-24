@@ -1,4 +1,5 @@
 import { sequelize } from '../config/db.js';
+import { AuditLog } from '../models/index.js';
 
 // Option B: compose recent events from invoices, payments, cash sessions
 export async function listEvents({ schoolId, limit = 20, from, to, types }) {
@@ -79,5 +80,24 @@ function buildMeta(row) {
 }
 
 export default { listEvents };
+
+export async function emitAudit({ schoolId, actorUserId, entity, entityId, action, before, after, transaction }) {
+  if (!schoolId || !actorUserId || !entity || !entityId || !action) return;
+  try {
+    await AuditLog.create({
+      school_id: schoolId,
+      actor_user_id: actorUserId,
+      entity,
+      entity_id: entityId,
+      action,
+      before_json: before || null,
+      after_json: after || null,
+      created_at: new Date()
+    }, { transaction });
+  } catch (err) {
+    // swallow audit errors to not break main flow
+    // console.error('audit emit failed', err);
+  }
+}
 
 
