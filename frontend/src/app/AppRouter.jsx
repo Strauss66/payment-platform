@@ -20,6 +20,7 @@ import CloseoutPage from '../pages/Cashier/CloseoutPage.jsx';
 // no hooks inside DashboardRoute to avoid hook-order issues on initial mounts
 import CoursesDashboard from '../pages/StudentParent/CoursesDashboard';
 import StubPage from '../pages/features/StubPage';
+import CalendarPage from '../pages/features/CalendarPage.jsx';
 import AnnouncementsPage from '../pages/features/AnnouncementsPage.jsx';
 import InvoicingEntitiesPage from '../pages/Admin/billing/InvoicingEntitiesPage';
 import CashRegistersPage from '../pages/Admin/billing/CashRegistersPage';
@@ -59,7 +60,7 @@ export default function AppRouter() {
         <Route path="schedule" element={<StubPage title="Class Schedule" />} />
         <Route path="tasks" element={<StubPage title="Tasks" />} />
         <Route path="grades" element={<StubPage title="Grade Report" />} />
-        <Route path="calendar" element={<StubPage title="Academic Calendar" />} />
+        <Route path="calendar" element={<CalendarPage />} />
         <Route path="files" element={<StubPage title="Email & Files" />} />
         <Route path="holds" element={<StubPage title="Holds" />} />
         <Route path="activity" element={<StubPage title="Activity Feed" />} />
@@ -109,7 +110,7 @@ export default function AppRouter() {
           <Route path="student-services" element={<StubPage title="Student Services" />} />
           <Route path="employee-tools" element={<StubPage title="Employee Tools" />} />
         </Route>
-        <Route path="events" element={<StubPage title="Campus Events" />} />
+        <Route path="events" element={<CalendarPage />} />
         <Route path="admin" element={<AdminDashboard />} />
         <Route path="admin/dashboard" element={
           <ProtectedRoute>

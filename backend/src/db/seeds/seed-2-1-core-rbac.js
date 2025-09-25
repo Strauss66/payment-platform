@@ -14,10 +14,10 @@ export default async function seedCoreRbac() {
       ['student_parent', 'Student/Parent']
     ];
 
-    for (const [code, name] of roles) {
+    for (const [key_name, display_name] of roles) {
       await sequelize.query(
-        'INSERT INTO roles (code, name, created_at, updated_at) VALUES (?, ?, NOW(), NOW())\n         ON DUPLICATE KEY UPDATE name = VALUES(name), updated_at = NOW()',
-        { replacements: [code, name], transaction: t }
+        'INSERT INTO roles (key_name, display_name) VALUES (?, ?)\n         ON DUPLICATE KEY UPDATE display_name = VALUES(display_name)',
+        { replacements: [key_name, display_name], transaction: t }
       );
     }
 
@@ -30,10 +30,10 @@ export default async function seedCoreRbac() {
       ['user.manage', 'Manage users'],
       ['prefs.manage', 'Manage preferences']
     ];
-    for (const [code, name] of perms) {
+    for (const [key_name, description] of perms) {
       await sequelize.query(
-        'INSERT INTO permissions (code, name, created_at, updated_at) VALUES (?, ?, NOW(), NOW())\n         ON DUPLICATE KEY UPDATE name = VALUES(name), updated_at = NOW()',
-        { replacements: [code, name], transaction: t }
+        'INSERT INTO permissions (key_name, description) VALUES (?, ?)\n         ON DUPLICATE KEY UPDATE description = VALUES(description)',
+        { replacements: [key_name, description], transaction: t }
       );
     }
 
@@ -49,10 +49,10 @@ export default async function seedCoreRbac() {
     };
 
     // Fetch role ids and permission ids
-    const [roleRows] = await sequelize.query('SELECT id, code FROM roles', { transaction: t });
-    const [permRows] = await sequelize.query('SELECT id, code FROM permissions', { transaction: t });
-    const codeToRoleId = Object.fromEntries(roleRows.map(r => [r.code, r.id]));
-    const codeToPermId = Object.fromEntries(permRows.map(p => [p.code, p.id]));
+    const [roleRows] = await sequelize.query('SELECT id, key_name FROM roles', { transaction: t });
+    const [permRows] = await sequelize.query('SELECT id, key_name FROM permissions', { transaction: t });
+    const codeToRoleId = Object.fromEntries(roleRows.map(r => [r.key_name, r.id]));
+    const codeToPermId = Object.fromEntries(permRows.map(p => [p.key_name, p.id]));
 
     for (const [roleCode, permCodes] of Object.entries(rolePermMap)) {
       const roleId = codeToRoleId[roleCode];
@@ -61,7 +61,7 @@ export default async function seedCoreRbac() {
         const permId = codeToPermId[permCode];
         if (!permId) continue;
         await sequelize.query(
-          'INSERT INTO role_permissions (role_id, permission_id, created_at, updated_at) VALUES (?, ?, NOW(), NOW())\n           ON DUPLICATE KEY UPDATE updated_at = NOW()',
+          'INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)\n           ON DUPLICATE KEY UPDATE permission_id = VALUES(permission_id)',
           { replacements: [roleId, permId], transaction: t }
         );
       }

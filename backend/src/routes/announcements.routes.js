@@ -15,6 +15,7 @@ import { validateAnnouncement, computeStatus, audienceSummary } from '../validat
 import { emitAudit } from '../services/audit.service.js';
 import { inboundDtoToModel, modelToOutboundDto } from '../mappers/announcementMapper.js';
 import { signKeys } from '../utils/mediaSigner.js';
+import { upsertEventFromAnnouncement, deleteEventByAnnouncementId } from '../services/calendar.service.js';
 import { deleteAnnouncementKeys } from "../utils/mediaDelete.js";
 
 const r = Router();
@@ -65,6 +66,12 @@ r.post('/', requireAuth, tenantScope, requireSameSchool, requireRoles('admin','s
 
     const created = await Announcement.create(payload);
     await emitAudit({ schoolId, actorUserId: req.user.id, entity: 'announcement', entityId: created.id, action: 'create', before: null, after: created.toJSON() });
+    // Calendar sync
+    try {
+      // pass addToCalendar flag from request to helper via a decorated object
+      const annWithFlag = { ...created.get({ plain: true }), addToCalendar: !!body.addToCalendar };
+      await upsertEventFromAnnouncement(annWithFlag);
+    } catch (e) { console.warn('[announcements:create] calendar sync failed', e?.message || e); }
     let dto = modelToOutboundDto(created);
     if (Array.isArray(dto.imageKeys) && dto.imageKeys.length) {
       dto.imageSignedUrls = await signKeys(dto.imageKeys, 1800);
@@ -120,6 +127,13 @@ r.put('/:id', requireAuth, tenantScope, requireSameSchool, requireRoles('admin',
     }
     await ann.update(updates);
     await emitAudit({ schoolId, actorUserId: req.user.id, entity: 'announcement', entityId: ann.id, action: 'update', before, after: ann.toJSON() });
+    // Calendar sync: create/update or delete depending on flags
+    try {
+      const annWithFlag = { ...ann.get({ plain: true }), addToCalendar: !!body.addToCalendar };
+      const shouldHave = (annWithFlag.category === 'events') || !!annWithFlag.addToCalendar;
+      if (shouldHave) await upsertEventFromAnnouncement(annWithFlag);
+      else await deleteEventByAnnouncementId(ann.id, schoolId);
+    } catch (e) { console.warn('[announcements:update] calendar sync failed', e?.message || e); }
     let dto = modelToOutboundDto(ann);
     if (Array.isArray(dto.imageKeys) && dto.imageKeys.length) {
       dto.imageSignedUrls = await signKeys(dto.imageKeys, 1800);
@@ -147,6 +161,7 @@ r.delete('/:id', requireAuth, tenantScope, requireSameSchool, requireRoles('admi
 
     await row.destroy();
     await emitAudit({ schoolId, actorUserId: req.user.id, entity: 'announcement', entityId: id, action: 'delete', before, after: null });
+    try { await deleteEventByAnnouncementId(id, schoolId); } catch (e) { console.warn('[announcements:delete] event cleanup failed', e?.message || e); }
 
     // best-effort media delete (can be toggled off)
     if (process.env.DELETE_MEDIA_ON_ANNOUNCEMENT_DELETE !== 'false' && keys.length) {

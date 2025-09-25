@@ -8,8 +8,8 @@ export default async function seedUsers() {
     if (!school) throw new Error('School not seeded yet');
 
     // Ensure roles exist
-    const [roles] = await sequelize.query('SELECT id, code FROM roles', { transaction: t });
-    const roleId = Object.fromEntries(roles.map(r => [r.code, r.id]));
+    const [roles] = await sequelize.query('SELECT id, key_name FROM roles', { transaction: t });
+    const roleId = Object.fromEntries(roles.map(r => [r.key_name, r.id]));
 
     const users = [
       { email: 'superadmin@weglon.test', password: 'Superadmin123!', first_name: 'Super', last_name: 'Admin', roles: ['super_admin'] },
@@ -23,8 +23,8 @@ export default async function seedUsers() {
     for (const u of users) {
       const hash = await bcrypt.hash(u.password, 10);
       await sequelize.query(
-        'INSERT INTO users (email, password_hash, username, status, created_at, updated_at) VALUES (?, ?, ?, "active", NOW(), NOW())\n         ON DUPLICATE KEY UPDATE username=VALUES(username), status=VALUES(status), updated_at=NOW()',
-        { replacements: [u.email, hash, u.email.split('@')[0]], transaction: t }
+        'INSERT INTO users (email, password_hash, username, school_id, status, created_at, updated_at) VALUES (?, ?, ?, ?, "active", NOW(), NOW())\n         ON DUPLICATE KEY UPDATE username=VALUES(username), school_id=VALUES(school_id), status=VALUES(status), updated_at=NOW()',
+        { replacements: [u.email, hash, u.email.split('@')[0], school.id], transaction: t }
       );
       const [[usr]] = await sequelize.query('SELECT id FROM users WHERE email = ?', { replacements: [u.email], transaction: t });
 
@@ -41,7 +41,7 @@ export default async function seedUsers() {
         const rid = roleId[r];
         if (!rid) continue;
         await sequelize.query(
-          'INSERT INTO user_roles (user_id, role_id, created_at, updated_at) VALUES (?, ?, NOW(), NOW())\n           ON DUPLICATE KEY UPDATE updated_at = NOW()',
+          'INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)\n           ON DUPLICATE KEY UPDATE role_id = VALUES(role_id)',
           { replacements: [usr.id, rid], transaction: t }
         );
       }

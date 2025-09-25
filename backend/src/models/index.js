@@ -315,3 +315,31 @@ export const AuditLog = sequelize.define('audit_logs', {
   after_json: { type: DataTypes.JSON },
   created_at: { type: DataTypes.DATE }
 }, { tableName: 'audit_logs', timestamps: false, underscored: true });
+
+// --- Calendars & Events ---
+export const Calendar = sequelize.define('calendars', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  name: { type: DataTypes.STRING(120), allowNull: false },
+  color: { type: DataTypes.STRING(16) },
+  visibility: { type: DataTypes.ENUM('school','private'), defaultValue: 'school' },
+  created_by: { type: DataTypes.BIGINT.UNSIGNED },
+  updated_by: { type: DataTypes.BIGINT.UNSIGNED }
+}, { tableName: 'calendars', underscored: true });
+
+export const Event = sequelize.define('events', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  calendar_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  title: { type: DataTypes.STRING(200), allowNull: false },
+  description: { type: DataTypes.TEXT },
+  starts_at: { type: DataTypes.DATE, allowNull: false },
+  ends_at: { type: DataTypes.DATE },
+  location: { type: DataTypes.STRING(200) },
+  source_type: { type: DataTypes.ENUM('manual','announcement'), defaultValue: 'manual' },
+  announcement_id: { type: DataTypes.BIGINT.UNSIGNED },
+  all_day: { type: DataTypes.TINYINT, defaultValue: 0 }
+}, { tableName: 'events', underscored: true });
+
+Calendar.hasMany(Event, { foreignKey: 'calendar_id', as: 'events' });
+Event.belongsTo(Calendar, { foreignKey: 'calendar_id', as: 'calendar' });

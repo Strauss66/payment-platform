@@ -252,7 +252,7 @@ function AdminAnnouncements(){
   const [form, setForm] = useState({
     title: '', body: '', category: 'other', audience_type: 'school',
     entireSchool: true,
-    sections: [], classIds: [], studentIds: [], roleKeys: [], imageKeys: [], startsAt: '', endsAt: ''
+    sections: [], classIds: [], studentIds: [], roleKeys: [], imageKeys: [], startsAt: '', endsAt: '', addToCalendar: false
   });
 
   const load = async () => {
@@ -298,9 +298,10 @@ function AdminAnnouncements(){
         roleKeys: form.roleKeys.length ? form.roleKeys : undefined,
         imageKeys: form.imageKeys.length ? form.imageKeys : undefined,
         startsAt: form.startsAt,
-        endsAt: form.endsAt || null
+        endsAt: form.endsAt || null,
+        addToCalendar: form.category === 'events' ? true : !!form.addToCalendar
       });
-      setForm({ title: '', body: '', category: 'other', audience_type: 'school', entireSchool: true, sections: [], classIds: [], studentIds: [], roleKeys: [], imageKeys: [], startsAt: '', endsAt: '' });
+      setForm({ title: '', body: '', category: 'other', audience_type: 'school', entireSchool: true, sections: [], classIds: [], studentIds: [], roleKeys: [], imageKeys: [], startsAt: '', endsAt: '', addToCalendar: false });
       await load();
     } catch (err) {
       const msg = err?.response?.data?.message || err?.response?.data?.code || err?.message || 'Failed to create announcement';
@@ -338,6 +339,14 @@ function AdminAnnouncements(){
             <option value="activities">Activities</option>
             <option value="other">Other</option>
           </select>
+        </div>
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Add to Calendar</label>
+          <label className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${ (form.category==='events' ? true : form.addToCalendar) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-900'}`}>
+            <input type="checkbox" checked={form.category==='events' ? true : !!form.addToCalendar} onChange={(e)=>setForm({ ...form, addToCalendar: e.target.checked })} />
+            Add to Calendar
+          </label>
+          <div className="text-xs text-gray-500 mt-1">On when category is "events"; otherwise optional.</div>
         </div>
         <div>
           <label className="block text-sm text-gray-600 mb-1">Audience</label>
@@ -517,7 +526,8 @@ function AdminAnnouncements(){
               roleKeys: updated.roleKeys?.length ? updated.roleKeys : undefined,
               imageKeys: updated.imageKeys?.length ? updated.imageKeys : undefined,
               startsAt: updated.startsAt,
-              endsAt: updated.endsAt || null
+              endsAt: updated.endsAt || null,
+              addToCalendar: updated.category === 'events' ? true : !!updated.addToCalendar
             });
             setEditingAnnouncement(null);
             await load();
