@@ -15,7 +15,7 @@ import BaseDashboard from '../pages/dashboard/BaseDashboard';
 import { useDashboard } from '../state/dashboard/DashboardContext';
 import AdminDashboard from '../pages/Admin/AdminDashboard';
 import AdminDashboardPage from '../pages/dashboard/AdminDashboardPage.jsx';
-import CashierDashboardPage from '../pages/dashboard/CashierDashboardPage.jsx';
+import CashierDashboard from '../pages/Cashier/CashierDashboard.jsx';
 import CloseoutPage from '../pages/Cashier/CloseoutPage.jsx';
 // no hooks inside DashboardRoute to avoid hook-order issues on initial mounts
 import CoursesDashboard from '../pages/StudentParent/CoursesDashboard';
@@ -41,6 +41,14 @@ import ReportsPage from '../pages/billing/ReportsPage.jsx'
 export default function AppRouter() {
   return (
     <Routes>
+      {/* New Cashier Dashboard (custom shell) */}
+      <Route path="/cashier/dashboard" element={
+        <ProtectedRoute>
+          <RoleGate allow={["cashier","admin","super_admin"]}>
+            <CashierDashboard />
+          </RoleGate>
+        </ProtectedRoute>
+      } />
       {/* Test route for API connectivity */}
       <Route path="/test" element={<TestConnection />} />
 
@@ -119,13 +127,7 @@ export default function AppRouter() {
             </RoleGate>
           </ProtectedRoute>
         } />
-        <Route path="cashier/dashboard" element={
-          <ProtectedRoute>
-            <RoleGate allow={["cashier","admin","super_admin"]}>
-              <CashierDashboardPage />
-            </RoleGate>
-          </ProtectedRoute>
-        } />
+        <Route path="cashier/dashboard" element={<Navigate to="/cashier/dashboard" replace />} />
         <Route path="cashier/closeout" element={
           <ProtectedRoute>
             <RoleGate allow={["cashier","admin","super_admin"]}>
@@ -224,7 +226,7 @@ function DashboardRoute(){
     return <Navigate to="/app/admin/dashboard" replace />;
   }
   if (roles.includes('cashier')) {
-    return <Navigate to="/app/cashier/dashboard" replace />;
+    return <Navigate to="/cashier/dashboard" replace />;
   }
   return <PortalDashboardPage />;
 }
