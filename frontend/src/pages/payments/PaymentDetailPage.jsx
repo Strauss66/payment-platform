@@ -6,7 +6,7 @@ import { ROLES } from '../../contexts/AuthContext';
 export default function PaymentDetailPage(){
   return (
     <ProtectedRoute>
-      <RoleGate allow={[ROLES.ADMIN, ROLES.SUPER_ADMIN]}>
+      <RoleGate allow={[ROLES.CASHIER, ROLES.ADMIN, ROLES.SUPER_ADMIN]}>
         <div className="space-y-4">
           <div className="text-2xl font-semibold">Payment Detail</div>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

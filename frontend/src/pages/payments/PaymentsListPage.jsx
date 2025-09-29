@@ -78,7 +78,7 @@ export default function PaymentsListPage(){
 
   return (
     <ProtectedRoute>
-      <RoleGate allow={[ROLES.ADMIN, ROLES.SUPER_ADMIN]}>
+      <RoleGate allow={[ROLES.CASHIER, ROLES.ADMIN, ROLES.SUPER_ADMIN]}>
         <div className="space-y-4">
           <div>
             <div className="text-3xl font-semibold tracking-tight text-slate-900">Payments</div>
