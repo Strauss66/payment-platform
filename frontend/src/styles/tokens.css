@@ -1,0 +1,27 @@
+/* Design tokens: spacing, radii, shadows, palette */
+:root{
+  /* Spacing scale */
+  --gap-1: 6px;
+  --gap-2: 10px;
+  --gap-3: 14px;
+  --gap-4: 20px;
+
+  /* Radius */
+  --r-card: 16px;
+  --r-pill: 999px;
+
+  /* Shadow */
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.06);
+
+  /* Neutral palette */
+  /* Choose dark header/rail option by setting --bg to #0b0d12 if desired */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --muted: #f5f6f8;
+  --border: #e6e8ee;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --accent: #111827;
+}
+
+

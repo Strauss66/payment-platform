@@ -11,11 +11,11 @@ type AppShellProps = {
 
 const navItems = [
   { to: '/cashier/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/payments', label: 'Payments', icon: CreditCard },
-  { to: '/invoices', label: 'Invoices', icon: FileText },
-  { to: '/students', label: 'Students', icon: GraduationCap },
-  { to: '/reports', label: 'Reports', icon: LineChart },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: '/app/billing/payments', label: 'Payments', icon: CreditCard },
+  { to: '/app/billing/invoices', label: 'Invoices', icon: FileText },
+  { to: '/app/people/students', label: 'Students', icon: GraduationCap },
+  { to: '/app/billing/reports', label: 'Reports', icon: LineChart },
+  { to: '/app/settings/org', label: 'Settings', icon: Settings },
 ];
 
 export default function AppShell({ title = 'Dashboard', subtitle, rightSlot, children }: AppShellProps) {

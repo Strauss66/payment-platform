@@ -36,6 +36,8 @@ import GlobalPreferencesPage from '../pages/settings/GlobalPreferencesPage.jsx';
 import AudienceFlagsPage from '../pages/settings/AudienceFlagsPage.jsx';
 import InvoicesPage from '../pages/billing/InvoicesPage.jsx'
 import PaymentsPage from '../pages/billing/PaymentsPage.jsx'
+import PaymentsListPage from '../pages/payments/PaymentsListPage.jsx'
+import PaymentDetailPage from '../pages/payments/PaymentDetailPage.jsx'
 import ReportsPage from '../pages/billing/ReportsPage.jsx'
 
 export default function AppRouter() {
@@ -84,8 +86,15 @@ export default function AppRouter() {
           } />
           <Route path="payments" element={
             <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <PaymentsPage />
+              <RoleGate allow={["cashier","admin","super_admin"]}>
+                <PaymentsListPage />
+              </RoleGate>
+            </ProtectedRoute>
+          } />
+          <Route path="payments/:invoiceId" element={
+            <ProtectedRoute>
+              <RoleGate allow={["cashier","admin","super_admin"]}>
+                <PaymentDetailPage />
               </RoleGate>
             </ProtectedRoute>
           } />

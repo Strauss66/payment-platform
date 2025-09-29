@@ -211,31 +211,35 @@ function PortalAnnouncements(){
   return (
     <div className="space-y-3">
       {rows.map(a => (
-        <article key={a.id} className="p-4 rounded-lg border bg-white">
-          <div className="text-xs text-gray-500 mb-1">{capitalize(a.category)} · {a.status}</div>
-          <h3 className="text-lg font-semibold">{a.title}</h3>
-          {a.body && <p className="text-gray-700 whitespace-pre-wrap mt-1">{a.body}</p>}
-          {(() => {
-            const imgs = resolveAnnouncementImages(a);
-            return imgs.length > 0;
-          })() && (
-            <div className="mt-2 flex gap-2 flex-wrap">
-              {resolveAnnouncementImages(a).map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt={a.imageAlts?.[i] || ''}
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                  onError={(e)=>{ e.currentTarget.style.display='none'; }}
-                  className="w-24 h-24 object-cover rounded border"
-                />
-              ))}
+        <article key={a.id} className="p-4 rounded-2xl border bg-white shadow-[var(--shadow-card)] flex items-center gap-4">
+          {/* Thumbnail */}
+          <div className="shrink-0">
+            {(() => {
+              const imgs = resolveAnnouncementImages(a);
+              if (!imgs.length) {
+                return (
+                  <div className="w-28 h-20 rounded-xl overflow-hidden border bg-gray-50 grid place-items-center">
+                    <span className="text-xs text-gray-500">No image</span>
+                  </div>
+                );
+              }
+              return (
+                <img src={imgs[0]} alt={a.imageAlts?.[0] || ''} className="w-28 h-20 object-cover rounded-xl border" />
+              );
+            })()}
+          </div>
+          {/* Body */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: badgeColor(a.status).bg, color: badgeColor(a.status).fg }}>{(a.status||'').toUpperCase()}</span>
+              <span>{capitalize(a.category)}</span>
             </div>
-          )}
-          <div className="mt-2 text-xs text-gray-500">
-            {fmt.format(new Date(a.startsAt))}
-            {a.endsAt ? ` → ${fmt.format(new Date(a.endsAt))}` : ''}
+            <h3 className="mt-1 text-base font-medium text-gray-900 truncate">{a.title}</h3>
+            {a.body && <p className="text-sm text-gray-700 mt-0.5 line-clamp-2">{a.body}</p>}
+            <div className="mt-1 text-xs text-gray-500">
+              {fmt.format(new Date(a.startsAt))}
+              {a.endsAt ? ` → ${fmt.format(new Date(a.endsAt))}` : ''}
+            </div>
           </div>
         </article>
       ))}

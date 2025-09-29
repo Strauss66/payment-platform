@@ -1,5 +1,9 @@
 import React from 'react';
 import { calendarsApi, eventsApi } from '../../lib/api.calendar';
+import { addWeeks, addMonths, startOfWeek as dfStartOfWeek, startOfMonth, endOfWeek as dfEndOfWeek, endOfMonth } from 'date-fns';
+
+function periodStart(d, v){ return v === 'week' ? dfStartOfWeek(d, { weekStartsOn: 0 }) : startOfMonth(d); }
+function periodEnd(d, v){ return v === 'week' ? dfEndOfWeek(d, { weekStartsOn: 0 }) : endOfMonth(d); }
 
 export default function CalendarPage(){
   const [view, setView] = React.useState('month'); // 'month' | 'week'
@@ -11,21 +15,22 @@ export default function CalendarPage(){
   React.useEffect(()=>{ (async()=>{ try { const list = await calendarsApi.list(); setCalendars(list); if (list[0]) setSelectedCalendarId(list[0].id); } catch {} })(); }, []);
 
   React.useEffect(()=>{ (async()=>{
-    const { from, to } = viewRange(view, cursorDate);
-    try { const list = await eventsApi.list({ from: from.toISOString(), to: to.toISOString(), calendarId: selectedCalendarId || undefined }); setEvents(list || []); } catch {}
+    const from = periodStart(cursorDate, view).toISOString();
+    const to = periodEnd(cursorDate, view).toISOString();
+    try { const list = await eventsApi.list({ from, to, calendarId: selectedCalendarId || undefined }); setEvents(list || []); } catch {}
   })(); }, [view, cursorDate, selectedCalendarId]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
       <div>
         <Toolbar view={view} setView={setView} cursorDate={cursorDate} setCursorDate={setCursorDate} />
-        <div className="mt-4 bg-white rounded-lg border p-2">
+        <div className="mt-4 bg-white rounded-2xl border p-2 shadow-[var(--shadow-card)]">
           {view === 'month' ? <MonthGrid date={cursorDate} events={events} /> : <WeekGrid date={cursorDate} events={events} />}
         </div>
       </div>
       <aside>
         <MiniMonth date={cursorDate} onPick={(d)=>setCursorDate(d)} />
-        <div className="mt-6 bg-white rounded-lg border p-4">
+        <div className="mt-6 bg-white rounded-2xl border p-4 shadow-[var(--shadow-card)]">
           <div className="font-semibold mb-2">Calendars</div>
           <div className="space-y-2">
             {calendars.map(c => (
@@ -44,17 +49,24 @@ export default function CalendarPage(){
 }
 
 function Toolbar({ view, setView, cursorDate, setCursorDate }){
-  const go = (deltaDays) => setCursorDate(new Date(cursorDate.getTime() + deltaDays*86400000));
-  const fmt = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
+  function onPrev(){ setCursorDate(prev => view === 'week' ? addWeeks(prev, -1) : addMonths(prev, -1)); }
+  function onNext(){ setCursorDate(prev => view === 'week' ? addWeeks(prev, 1) : addMonths(prev, 1)); }
+  function onToday(){ const now = new Date(); setCursorDate(periodStart(now, view)); }
+  function onChangeView(v){ setView(v); setCursorDate(prev => periodStart(prev, v)); }
+
+  const title = view === 'week'
+    ? `${periodStart(cursorDate, 'week').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – ${periodEnd(cursorDate, 'week').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+    : cursorDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+
   return (
     <div className="flex items-center justify-between">
-      <div className="text-2xl font-extrabold">{fmt.format(cursorDate)}</div>
+      <div className="text-2xl font-semibold tracking-tight">{title}</div>
       <div className="flex items-center gap-2">
-        <button className="px-3 py-1.5 rounded border" onClick={()=>setCursorDate(new Date())}>Today</button>
-        <button className="px-3 py-1.5 rounded border" onClick={()=>go(-7)}>←</button>
-        <button className="px-3 py-1.5 rounded border" onClick={()=>go(7)}>→</button>
-        <button className={`px-3 py-1.5 rounded border ${view==='month'?'bg-gray-900 text-white':''}`} onClick={()=>setView('month')}>Month</button>
-        <button className={`px-3 py-1.5 rounded border ${view==='week'?'bg-gray-900 text-white':''}`} onClick={()=>setView('week')}>Week</button>
+        <button className="px-3 py-1.5 rounded border" onClick={onToday}>Today</button>
+        <button className="px-3 py-1.5 rounded border" onClick={onPrev}>←</button>
+        <button className="px-3 py-1.5 rounded border" onClick={onNext}>→</button>
+        <button className={`px-3 py-1.5 rounded border ${view==='month'?'bg-gray-900 text-white':''}`} onClick={()=>onChangeView('month')}>Month</button>
+        <button className={`px-3 py-1.5 rounded border ${view==='week'?'bg-gray-900 text-white':''}`} onClick={()=>onChangeView('week')}>Week</button>
       </div>
     </div>
   );
@@ -131,7 +143,7 @@ function MiniMonth({ date, onPick }){
   const month = date.getUTCMonth();
   const fmt = new Intl.DateTimeFormat(undefined, { day: 'numeric' });
   return (
-    <div className="bg-white rounded-lg border p-3">
+    <div className="bg-white rounded-2xl border p-3 shadow-[var(--shadow-card)]">
       <div className="text-center font-semibold mb-2">{date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</div>
       <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-600 mb-1">
         {['S','M','T','W','T','F','S'].map((s,i)=>(<div key={i}>{s}</div>))}

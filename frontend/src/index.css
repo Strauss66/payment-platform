@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.tokens{ /* noop utility to ensure tokens.css is loaded via @import side-effect */ }
+
+@import './styles/tokens.css';
+
 .rounded-custom {
   border-top-left-radius: 0.5rem;
   border-bottom-left-radius: 0.5rem;

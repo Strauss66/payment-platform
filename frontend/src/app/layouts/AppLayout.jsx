@@ -1,7 +1,7 @@
 // src/app/layouts/AppLayout.jsx
 import { Outlet, NavLink, Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { Bell, MessageSquare, Menu, Search, ChevronDown, Edit3, LogOut, User2, Settings as SettingsIcon, HelpCircle, IdCard, Users } from "lucide-react";
+import { Bell, MessageSquare, Menu, Search, ChevronDown, Edit3, LogOut, User2, Settings as SettingsIcon, HelpCircle, IdCard, Users, LayoutDashboard, CreditCard, FileText, BarChart3, Megaphone, CalendarDays, Activity, CheckSquare } from "lucide-react";
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import NoTenantBanner from '../../components/NoTenantBanner.jsx';
@@ -45,9 +45,9 @@ export default function AppLayout() {
   }, []);
 
   return (
-    <div className="min-h-screen grid" style={{ gridTemplateColumns: collapsed ? "72px 1fr" : "280px 1fr" }}>
+    <div className="min-h-screen grid" style={{ gridTemplateColumns: collapsed ? "72px 1fr" : "240px 1fr" }}>
       {/* Sidebar */}
-      <aside className="bg-white text-black">
+      <aside className="bg-white text-black border-r border-gray-200 shadow-sm">
         <div className="h-16 flex items-center gap-2 px-4">
           <button
             aria-label="Toggle navigation"
@@ -71,11 +71,11 @@ export default function AppLayout() {
         <nav className="px-3 pb-6 space-y-6 overflow-y-auto h-[calc(100vh-4rem)]">
           {/* Primary Navigation */}
           <Section title="Navigation" collapsed={collapsed}>
-            <SidebarItem to="/app/dashboard" label="Dashboard" collapsed={collapsed} />
-            <SidebarItem to="/app/activity" label="Activity" collapsed={collapsed} />
-            <SidebarItem to="/app/tasks" label="Tasks" collapsed={collapsed} />
-            <SidebarItem to="/app/announcements" label="Announcements" collapsed={collapsed} />
-            <SidebarItem to="/app/events" label="Events & Calendars" collapsed={collapsed} />
+            <SidebarItem to="/app/dashboard" label="Dashboard" icon={LayoutDashboard} collapsed={collapsed} />
+            <SidebarItem to="/app/activity" label="Activity" icon={Activity} collapsed={collapsed} />
+            <SidebarItem to="/app/tasks" label="Tasks" icon={CheckSquare} collapsed={collapsed} />
+            <SidebarItem to="/app/announcements" label="Announcements" icon={Megaphone} collapsed={collapsed} />
+            <SidebarItem to="/app/events" label="Events & Calendars" icon={CalendarDays} collapsed={collapsed} />
           </Section>
 
           {/* Shortcuts */}
@@ -86,19 +86,19 @@ export default function AppLayout() {
 
           <CollapsibleSection title="Billing" collapsed={collapsed}>
             <SidebarItem to="/app/admin/dashboard" label="Billing Dashboard (Admin)" collapsed={collapsed} />
-            <SidebarItem to="/app/billing/invoices" label="Invoices" collapsed={collapsed} />
-            <SidebarItem to="/app/billing/payments" label="Payments" collapsed={collapsed} />
+            <SidebarItem to="/app/billing/invoices" label="Invoices" icon={FileText} collapsed={collapsed} />
+            <SidebarItem to="/app/billing/payments" label="Payments" icon={CreditCard} collapsed={collapsed} />
             <SidebarItem to="/app/billing/cash-registers" label="Cash Registers" collapsed={collapsed} />
             <SidebarItem to="/app/billing/invoicing-entities" label="Invoicing Entities" collapsed={collapsed} />
-            <SidebarItem to="/app/billing/reports" label="Reports" collapsed={collapsed} />
+            <SidebarItem to="/app/billing/reports" label="Reports" icon={BarChart3} collapsed={collapsed} />
           </CollapsibleSection>
 
           <CollapsibleSection title="People" collapsed={collapsed}>
-            <SidebarItem to="/app/people/families" label="Families" collapsed={collapsed} />
-            <SidebarItem to="/app/people/students" label="Students" collapsed={collapsed} />
-            <SidebarItem to="/app/people/teachers" label="Teachers" collapsed={collapsed} />
-            <SidebarItem to="/app/people/employees" label="Employees" collapsed={collapsed} />
-            <SidebarItem to="/app/people/roles" label="Users & Roles" collapsed={collapsed} />
+            <SidebarItem to="/app/people/families" label="Families" icon={Users} collapsed={collapsed} />
+            <SidebarItem to="/app/people/students" label="Students" icon={Users} collapsed={collapsed} />
+            <SidebarItem to="/app/people/teachers" label="Teachers" icon={Users} collapsed={collapsed} />
+            <SidebarItem to="/app/people/employees" label="Employees" icon={Users} collapsed={collapsed} />
+            <SidebarItem to="/app/people/roles" label="Users & Roles" icon={Users} collapsed={collapsed} />
           </CollapsibleSection>
 
           <CollapsibleSection title="Settings" collapsed={collapsed}>
@@ -122,7 +122,7 @@ export default function AppLayout() {
       <div className="min-h-screen">
         {/* Topbar */}
         <header className="h-16 sticky top-0 z-40 bg-gradient-to-b from-white/85 to-white/65 backdrop-blur border-b border-[var(--surface-muted)]">
-          <div className="h-full px-6 flex items-center justify-between gap-4">
+          <div className="h-full px-6 flex items-center justify-between gap-4 max-w-[1400px] mx-auto">
             {/* Search */}
             <div className="relative w-full max-w-xl">
               <Search className="size-5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
@@ -190,6 +190,7 @@ export default function AppLayout() {
 
         <ToastProvider>
           <main className="px-6 py-6">
+            <div className="max-w-[1400px] mx-auto">
             {(!currentSchoolId || needsSelection || brandingNotConfigured) && (
               <NoTenantBanner />
             )}
@@ -199,6 +200,7 @@ export default function AppLayout() {
               </div>
             )}
             <Outlet />
+            </div>
           </main>
         </ToastProvider>
 
@@ -226,19 +228,21 @@ function Section({ title, children, collapsed, action }) {
   );
 }
 
-function SidebarItem({ to, label, collapsed }) {
+function SidebarItem({ to, label, icon: Icon, collapsed }) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
         clsx(
-          "block px-3 py-2 rounded-md text-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-200 text-black",
-          isActive && "bg-gray-100 font-medium"
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition",
+          isActive ? "bg-gray-900 text-white hover:bg-gray-900" : "hover:bg-gray-100 text-gray-700"
         )
       }
       title={collapsed ? label : undefined}
     >
-      {collapsed ? <span className="sr-only">{label}</span> : label}
+      {Icon && <Icon className="size-4" />}
+      {!collapsed && <span className="text-sm font-medium">{label}</span>}
+      {collapsed && <span className="sr-only">{label}</span>}
     </NavLink>
   );
 }

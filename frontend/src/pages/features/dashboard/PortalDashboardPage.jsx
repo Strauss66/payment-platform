@@ -111,7 +111,7 @@ export default function PortalDashboardPage(){
         <h1 className="text-2xl font-semibold text-gray-900">Portal Dashboard</h1>
         <div className="flex items-center gap-2">
           <button onClick={handleReset} className="px-3 py-2 text-sm border rounded-md bg-white hover:bg-gray-50">Reset</button>
-          <button onClick={handleSave} disabled={saving} className="px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
+          <button onClick={handleSave} disabled={saving} className="px-3 py-2 text-sm rounded-md bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50">
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
