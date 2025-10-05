@@ -1,7 +1,6 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import PublicLayout from './layouts/PublicLayout';
-import AppLayout from './layouts/AppLayout';
 import ProtectedRoute from './guards/ProtectedRoute';
 import RoleGate from './guards/RoleGate';
 
@@ -10,12 +9,9 @@ import LandingPage from '../pages/LandingPage';
 import SignInPage from '../pages/Auth/SignInPage';
 import SignUpPage from '../pages/Auth/SignUpPage';
 import TestConnection from '../pages/TestConnection';
-import PortalDashboardPage from '../pages/features/dashboard/PortalDashboardPage';
-import BaseDashboard from '../pages/dashboard/BaseDashboard';
 import { useDashboard } from '../state/dashboard/DashboardContext';
-import AdminDashboard from '../pages/Admin/AdminDashboard';
-import AdminDashboardPage from '../pages/dashboard/AdminDashboardPage.jsx';
-import CashierDashboard from '../pages/Cashier/CashierDashboard.jsx';
+import AppShell from '../components/layout/AppShell';
+import Dashboard from '../components/dashboard/Dashboard';
 import CloseoutPage from '../pages/Cashier/CloseoutPage.jsx';
 // no hooks inside DashboardRoute to avoid hook-order issues on initial mounts
 import CoursesDashboard from '../pages/StudentParent/CoursesDashboard';
@@ -43,14 +39,7 @@ import ReportsPage from '../pages/billing/ReportsPage.jsx'
 export default function AppRouter() {
   return (
     <Routes>
-      {/* New Cashier Dashboard (custom shell) */}
-      <Route path="/cashier/dashboard" element={
-        <ProtectedRoute>
-          <RoleGate allow={["cashier","admin","super_admin"]}>
-            <CashierDashboard />
-          </RoleGate>
-        </ProtectedRoute>
-      } />
+      {/* unified dashboard under /app */}
       {/* Test route for API connectivity */}
       <Route path="/test" element={<TestConnection />} />
 
@@ -59,13 +48,20 @@ export default function AppRouter() {
       <Route path="/auth/login" element={<SignInPage />} />
       <Route path="/auth/register" element={<SignUpPage />} />
 
-      {/* App routes - only including what exists */}
-      <Route path="app" element={<AppLayout />}>
-        <Route index element={<DashboardRoute />} />
-        <Route path="dashboard" element={<DashboardRoute />} />
+      {/* App routes - unified shell */}
+      <Route path="app" element={<AppShellLayout />}>
+        <Route index element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="dashboard" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
         <Route path="activity" element={<StubPage title="Activity" />} />
         <Route path="announcements" element={<AnnouncementsPage />} />
-        <Route path="portal" element={<PortalDashboardPage />} />
         <Route path="courses" element={<CoursesDashboard />} />
         <Route path="schedule" element={<StubPage title="Class Schedule" />} />
         <Route path="tasks" element={<StubPage title="Tasks" />} />
@@ -128,15 +124,7 @@ export default function AppRouter() {
           <Route path="employee-tools" element={<StubPage title="Employee Tools" />} />
         </Route>
         <Route path="events" element={<CalendarPage />} />
-        <Route path="admin" element={<AdminDashboard />} />
-        <Route path="admin/dashboard" element={
-          <ProtectedRoute>
-            <RoleGate allow={["admin","super_admin"]}>
-              <AdminDashboardPage />
-            </RoleGate>
-          </ProtectedRoute>
-        } />
-        <Route path="cashier/dashboard" element={<Navigate to="/cashier/dashboard" replace />} />
+        
         <Route path="cashier/closeout" element={
           <ProtectedRoute>
             <RoleGate allow={["cashier","admin","super_admin"]}>
@@ -228,14 +216,10 @@ export default function AppRouter() {
   );
 }
 
-function DashboardRoute(){
-  let roles = [];
-  try { roles = JSON.parse(localStorage.getItem('user.roles') || '[]') || []; } catch {}
-  if (roles.includes('admin') || roles.includes('super_admin')) {
-    return <Navigate to="/app/admin/dashboard" replace />;
-  }
-  if (roles.includes('cashier')) {
-    return <Navigate to="/cashier/dashboard" replace />;
-  }
-  return <PortalDashboardPage />;
+function AppShellLayout(){
+  return (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  );
 }
