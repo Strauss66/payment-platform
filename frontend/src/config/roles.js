@@ -1,6 +1,23 @@
 import { LayoutDashboard, CreditCard, Users, FileText, BarChart3, Settings, CalendarDays, Megaphone } from "lucide-react";
 
 export const ROLE_CONFIG = {
+  super_admin: {
+    sidebar: [
+      { path: "/superadmin", label: "Overview", icon: LayoutDashboard },
+      // Map to existing pages to avoid broken links
+      { path: "/app/people/students", label: "Users", icon: Users },
+      { path: "/app/billing/reports", label: "Billing", icon: BarChart3 },
+      { path: "/app/admin/system-health", label: "System Health", icon: BarChart3 },
+      { path: "/app/settings/org", label: "Settings", icon: Settings },
+    ],
+    dashboard: {
+      kpis: ["todaysCollections","pendingInvoices","overdueInvoices"],
+      rows: [
+        ["collectionsLineChart","paymentMethodMix"],
+        ["attentionNeededTable"]
+      ]
+    }
+  },
   admin: {
     sidebar: [
       { path: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },

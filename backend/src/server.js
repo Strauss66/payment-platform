@@ -27,6 +27,8 @@ import eventsRoutes from "./routes/events.routes.js";
 import uploadsRoutes from "./routes/uploads.routes.js";
 import peopleRoutes from "./routes/people.routes.js";
 import diagRoutes from "./routes/diag.routes.js";
+import metricsRoutes from "./routes/metrics.routes.js";
+import searchRoutes from "./routes/search.routes.js";
 import lateFeesRoutes from "./routes/billing.latefees.routes.js";
 import fs from "fs";
 
@@ -102,6 +104,8 @@ app.use("/api/events", tenancy, eventsRoutes);
 app.use("/api/uploads", uploadsRoutes);
 app.use("/api/people", peopleRoutes);
 app.use("/api/diag", diagRoutes);
+app.use("/api/metrics", metricsRoutes);
+app.use("/api/search", searchRoutes);
 
 // API root endpoint
 app.get("/api", (req, res) => {

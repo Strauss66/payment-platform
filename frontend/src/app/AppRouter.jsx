@@ -12,6 +12,7 @@ import TestConnection from '../pages/TestConnection';
 import { useDashboard } from '../state/dashboard/DashboardContext';
 import AppShell from '../components/layout/AppShell';
 import Dashboard from '../components/dashboard/Dashboard';
+import SuperAdminDashboard from '../pages/SuperAdminDashboard.jsx';
 import CloseoutPage from '../pages/Cashier/CloseoutPage.jsx';
 // no hooks inside DashboardRoute to avoid hook-order issues on initial mounts
 import CoursesDashboard from '../pages/StudentParent/CoursesDashboard';
@@ -39,6 +40,16 @@ import ReportsPage from '../pages/billing/ReportsPage.jsx'
 export default function AppRouter() {
   return (
     <Routes>
+      {/* SuperAdmin route */}
+      <Route path="/superadmin" element={
+        <ProtectedRoute>
+          <RoleGate allow={["super_admin"]}>
+            <AppShellLayout />
+          </RoleGate>
+        </ProtectedRoute>
+      }>
+        <Route index element={<SuperAdminDashboard />} />
+      </Route>
       {/* unified dashboard under /app */}
       {/* Test route for API connectivity */}
       <Route path="/test" element={<TestConnection />} />
