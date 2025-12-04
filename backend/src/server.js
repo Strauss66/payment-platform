@@ -60,18 +60,7 @@ try {
 // CORS Configuration
 const rawOrigins = process.env.CORS_ORIGIN || "http://localhost:3000";
 const allowedOrigins = rawOrigins.split(',').map(s => s.trim()).filter(Boolean);
-app.use(cors({
-  origin: function(origin, callback){
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    // Allow localhost variants in development
-    if (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
-    return callback(new Error('CORS not allowed'), false);
-  },
-  methods: "GET,POST,PUT,DELETE,OPTIONS",
-  allowedHeaders: "Content-Type,Authorization,X-School-Id",
-  credentials: false
-}));
+
 app.options('*', cors());
 
 // Basic HTTP request logging (minimal)
@@ -102,45 +91,6 @@ const mergedDirectives = { ...defaultDirectives, 'img-src': IMG_SOURCES };
 app.use(helmet({ contentSecurityPolicy: { directives: mergedDirectives } }));
 // Tenancy context after auth is parsed in route-level; for global routes, we apply per-router
 
-// Register API routes
-app.use("/api/auth", authRoutes);
-app.use("/api/health", healthRoutes);
-app.use("/api/dashboard", tenancy, dashboardRoutes);
-app.use("/api/courses", coursesRoutes);
-app.use("/api/tenancy", tenancyRoutes);
-app.use("/api/admin/catalog", adminCatalogRoutes);
-app.use("/api/billing/invoices", tenancy, invoiceRoutes);
-app.use("/api/billing/payments", tenancy, paymentRoutes);
-app.use("/api/billing/invoicing-entities", tenancy, invoicingEntitiesRoutes);
-app.use("/api/billing/cash-registers", tenancy, cashRegistersRoutes);
-app.use("/api/billing", tenancy, cashierRoutes);
-app.use("/api/billing/late-fees", lateFeesRoutes);
-app.use("/api/portal", tenancy, portalStatementRoutes);
-app.use("/api/audit", auditRoutes);
-app.use("/api/announcements", announcementsRoutes);
-app.use("/api/calendars", tenancy, calendarsRoutes);
-app.use("/api/events", tenancy, eventsRoutes);
-app.use("/api/uploads", uploadsRoutes);
-app.use("/api/people", peopleRoutes);
-app.use("/api/diag", diagRoutes);
-app.use("/api/metrics", metricsRoutes);
-app.use("/api/search", searchRoutes);
-
-// API root endpoint
-app.get("/api", (req, res) => {
-  res.json({ 
-    message: "School Platform API", 
-    version: "1.0.0",
-    endpoints: {
-      auth: "/api/auth",
-      health: "/api/health",
-      root: "/api"
-    },
-    status: "running",
-    timestamp: new Date().toISOString()
-  });
-});
-
 // Serve React frontend in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/build")));
@@ -149,14 +99,7 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// Health check endpoint
-app.get("/", (req, res) => {
-  res.json({ 
-    message: "School Platform API is running", 
-    status: "healthy",
-    timestamp: new Date().toISOString()
-  });
-});
+
 
 // Start server function
 async function startServer() {
@@ -187,23 +130,16 @@ async function startServer() {
     process.exit(1);
   }
 }
-
-// Global error handler
-app.use((err, req, res, next) => {
-  const status = Number(err?.status || err?.statusCode || 500);
-  const code = err?.code || 'INTERNAL_ERROR';
-  const msg = err?.message || 'Internal server error';
-  if (status >= 500) {
-    console.error("❌ Internal Server Error:", err);
-  } else {
-    console.warn(`⚠️  Error ${status} [${code}]:`, msg);
-  }
-  res.status(status).json({ 
-    message: msg,
-    code,
-    ...(process.env.NODE_ENV === 'development' ? { stack: err?.stack } : {})
-  });
+// 404 handler – must come *after* all routes and *before* the error handler
+app.use((req, res, next) => {
+  res.status(404).json({ message: 'Not found' });
 });
+
+// Central error handler should remain last
+app.use((err, req, res, next) => {
+  // your existing error handler code
+});
+
 
 // Start the server
 startServer();
