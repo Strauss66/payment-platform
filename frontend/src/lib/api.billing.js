@@ -146,6 +146,14 @@ export async function listStudents(params = {}) { ensureTenant(); const { data }
 export async function listTeachers(params = {}) { ensureTenant(); const { data } = await api.get('/api/people/teachers', { params }); return Array.isArray(data?.rows) ? data : { rows: data || [], count: (data || []).length }; }
 export async function listEmployees(params = {}) { ensureTenant(); const { data } = await api.get('/api/people/employees', { params }); return Array.isArray(data?.rows) ? data : { rows: data || [], count: (data || []).length }; }
 
+export async function createFamily(payload = {}) { ensureTenant(); const { data } = await api.post('/api/people/families', payload); return data; }
+export async function updateFamily(id, payload = {}) { ensureTenant(); const { data } = await api.put(`/api/people/families/${id}`, payload); return data; }
+export async function deleteFamily(id) { ensureTenant(); await api.delete(`/api/people/families/${id}`); return { ok: true }; }
+
+export async function createStudent(payload = {}) { ensureTenant(); const { data } = await api.post('/api/people/students', payload); return data; }
+export async function updateStudent(id, payload = {}) { ensureTenant(); const { data } = await api.put(`/api/people/students/${id}`, payload); return data; }
+export async function deleteStudent(id) { ensureTenant(); await api.delete(`/api/people/students/${id}`); return { ok: true }; }
+
 export async function listUsers(params = {}) { ensureTenant(); const { data } = await api.get('/api/users', { params }); return Array.isArray(data?.rows) ? data : { rows: data || [], count: (data || []).length }; }
 export async function listRoles() { ensureTenant(); const { data } = await api.get('/api/roles'); return Array.isArray(data?.rows) ? data : { rows: data || [], count: (data || []).length }; }
 export async function assignRole(userId, role) { ensureTenant(); const { data } = await api.post(`/api/users/${userId}/roles`, { role }); return data; }

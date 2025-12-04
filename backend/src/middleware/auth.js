@@ -25,7 +25,10 @@ export function requireAuth(req, res, next) {
   if (!token) return res.status(401).json({ message: 'Missing token' });
 
   try {
-    const secret = process.env.JWT_SECRET || jwtConfig.jwt_secret || 'fallback-secret';
+    const secret = process.env.JWT_SECRET || jwtConfig.jwt_secret || (process.env.NODE_ENV !== 'production' ? 'fallback-secret' : null);
+    if (!secret) {
+      return res.status(500).json({ message: 'Server configuration error: missing JWT secret' });
+    }
     const payload = jwt.verify(token, secret);
     req.user = payload; // { id, school_id, defaultSchoolId, roles: [] }
     return next();

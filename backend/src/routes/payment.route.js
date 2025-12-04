@@ -60,35 +60,59 @@ r.get('/', requireAuth, tenantScope, requireSameSchool, async (req, res) => {
 });
 
 // Record a payment and allocate to invoice items
-r.post('/', requireAuth, requireRoles('admin','cashier'), requireSameSchool, async (req, res) => {
-  const schoolId = req.user.school_id;
-  const userId = req.user.id;
-  const requestedSessionId = req.body.session_id ? Number(req.body.session_id) : null;
+// Map string payment methods to IDs when needed
+const METHOD_MAP = { cash: 1, pos: 2, transfer: 3, online: 4 };
 
-  // Require an open cash session either by provided session_id or by current user's open session
-  let session = null;
-  if (requestedSessionId) {
-    session = await CashSession.findByPk(requestedSessionId);
-    if (!session || Number(session.school_id) !== Number(schoolId) || session.closed_at) {
-      return res.status(400).json({ message: 'Invalid or closed cash session' });
-    }
-  } else {
-    session = await CashSession.findOne({ where: { school_id: schoolId, opened_by: userId, closed_at: null } });
-    if (!session) {
-      return res.status(400).json({ message: 'Open cash session required' });
-    }
-  }
+const postSchema = z.object({
+  amount: z.coerce.number().positive(),
+  payment_method_id: z.union([z.coerce.number().int().positive(), z.string().toLowerCase().transform((s)=>METHOD_MAP[s] || NaN)]).refine((v)=>Number.isFinite(v) && v > 0, { message: 'Invalid payment method' }),
+  paid_at: z.string().datetime().optional(),
+  note: z.string().max(255).optional(),
+  session_id: z.coerce.number().int().positive().optional(),
+  allocations: z.array(z.object({
+    invoice_id: z.coerce.number().int().positive(),
+    invoice_item_id: z.coerce.number().int().positive().optional(),
+    amount: z.coerce.number().positive()
+  })).min(1)
+});
+
+r.post('/', requireAuth, requireRoles('admin','cashier'), requireSameSchool, async (req, res) => {
+  const schoolId = req.context?.schoolId ?? req.user.school_id;
+  const userId = req.user.id;
 
   try {
+    const body = postSchema.parse(req.body);
+
+    // Ensure session
+    let sessionId = body.session_id ? Number(body.session_id) : null;
+    if (sessionId) {
+      const s = await CashSession.findByPk(sessionId);
+      if (!s || Number(s.school_id) !== Number(schoolId) || s.closed_at) {
+        return res.status(400).json({ message: 'Invalid or closed cash session' });
+      }
+    } else {
+      const s = await CashSession.findOne({ where: { school_id: schoolId, opened_by: userId, closed_at: null } });
+      if (!s) {
+        return res.status(400).json({ message: 'Open cash session required' });
+      }
+      sessionId = s.id;
+    }
+
     const result = await PaymentService.postPayment({
       school_id: schoolId,
       cashier_user_id: userId,
-      paid_at: req.body.received_at,
-      ...req.body,
-      session_id: session.id
+      session_id: sessionId,
+      amount: body.amount,
+      payment_method_id: body.payment_method_id,
+      paid_at: body.paid_at,
+      note: body.note,
+      allocations: body.allocations
     });
     res.status(201).json(result);
   } catch (e) {
+    if (e instanceof z.ZodError) {
+      return res.status(400).json({ code: 'VALIDATION_ERROR', details: e.errors });
+    }
     const status = e?.status || 400;
     const payload = { code: e?.code || 'bad_request', message: e?.message || 'Failed to post payment' };
     return res.status(status).json(payload);

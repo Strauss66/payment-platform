@@ -4,7 +4,7 @@ Logins:
 - Super admin: superadmin@weglon.test / Superadmin123!
 - Admin: admin@weglon.test / Admin123!
 - Cashier: cashier@weglon.test / Cashier123!
-- Teacher: teacher@weglon.test / Teacher123!
+- Teacher: teacher@weglon.test / 
 - Student: student@weglon.test / Student123!
 - Parent: parent@weglon.test / Parent123!
 

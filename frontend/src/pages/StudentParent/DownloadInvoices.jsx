@@ -1,15 +1,28 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import InvoicePDF from "../../components/InvoicePDF.jsx"; // Ensure this exists
+import InvoicePDF, { DownloadInvoiceButton } from "../../components/invoices/InvoicePDF.jsx";
 
 export default function DownloadInvoices() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   // Dummy invoice data (Replace this with API data)
   const invoices = [
-    { id: 1, student: "John Doe", amount: "$500", date: "03/10/2025" },
-    { id: 2, student: "Jane Smith", amount: "$300", date: "02/15/2025" },
+    { id: 1, student: "John Doe", amount: 500, date: "2025-03-10" },
+    { id: 2, student: "Jane Smith", amount: 300, date: "2025-02-15" },
   ];
+
+  const pdfInvoice = useMemo(() => {
+    if (!selectedInvoice) return null;
+    return {
+      invoiceNumber: `INV-${selectedInvoice.id}`,
+      date: selectedInvoice.date,
+      studentName: selectedInvoice.student,
+      studentId: selectedInvoice.id,
+      grade: "",
+      items: [{ description: "Tuition", amount: selectedInvoice.amount }],
+      totalAmount: selectedInvoice.amount,
+    };
+  }, [selectedInvoice]);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -35,20 +48,9 @@ export default function DownloadInvoices() {
       {/* Show download button only when an invoice is selected */}
       {selectedInvoice && (
         <div className="mt-6">
-          <PDFDownloadLink
-            document={<InvoicePDF invoice={selectedInvoice} />}
-            fileName={`Invoice-${selectedInvoice.id}.pdf`}
-          >
-            {({ loading }) =>
-              loading ? (
-                <button className="bg-gray-400 text-white px-4 py-2 rounded-lg cursor-not-allowed">Generating PDF...</button>
-              ) : (
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                  Download Invoice
-                </button>
-              )
-            }
-          </PDFDownloadLink>
+          {pdfInvoice ? (
+            <DownloadInvoiceButton invoice={pdfInvoice} />
+          ) : null}
         </div>
       )}
     </div>

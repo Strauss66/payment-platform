@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { api } from '../../../lib/apiClient';
+import { api } from '../../../../lib/apiClient';
 
 export default function CashierSessionStatus(){
   const [sessionId, setSessionId] = useState('');

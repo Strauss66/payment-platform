@@ -73,7 +73,7 @@ export default function PaymentsListPage(){
   function onRowClick(r){
     const id = r.invoice_id || r.id;
     if (!id) return;
-    navigate(`/app/billing/payments?focus=${encodeURIComponent(id)}`);
+    navigate(`/app/billing/payments/${encodeURIComponent(id)}`);
   }
 
   return (

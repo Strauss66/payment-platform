@@ -1,10 +1,38 @@
 import { sequelize } from '../config/db.js';
-import { Payment, PaymentAllocation, Invoice, InvoiceItem } from '../models/index.js';
+import { Payment, PaymentAllocation, Invoice } from '../models/index.js';
 
-export async function postPayment({ school_id, student_id, method, amount, received_at, allocations = [] }) {
+export async function postPayment({
+  school_id,
+  cashier_user_id,
+  session_id,
+  amount,
+  payment_method_id,
+  paid_at,
+  note,
+  allocations = []
+}) {
   return await sequelize.transaction(async (t) => {
+    if (!Array.isArray(allocations) || allocations.length === 0) {
+      const err = new Error('At least one allocation is required');
+      err.status = 400;
+      throw err;
+    }
+    const primaryInvoiceId = Number(allocations[0]?.invoice_id);
+    if (!Number.isFinite(primaryInvoiceId)) {
+      const err = new Error('Primary invoice_id missing in allocations');
+      err.status = 400;
+      throw err;
+    }
+
     const payment = await Payment.create({
-      school_id, student_id, method, amount, received_at: received_at ? new Date(received_at) : new Date(), status: 'completed'
+      school_id,
+      invoice_id: primaryInvoiceId,
+      payment_method_id: payment_method_id ? Number(payment_method_id) : null,
+      amount: Number(amount),
+      paid_at: paid_at ? new Date(paid_at) : new Date(),
+      cashier_user_id: cashier_user_id || null,
+      session_id: session_id || null,
+      note: note || null
     }, { transaction: t });
 
     let remaining = Number(amount);
@@ -31,6 +59,7 @@ export async function postPayment({ school_id, student_id, method, amount, recei
       remaining -= allocAmt;
     }
 
-    return { payment, remaining_unallocated: remaining };
+    const json = payment.toJSON();
+    return { payment: json, remaining_unallocated: remaining };
   });
 }

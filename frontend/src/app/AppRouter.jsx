@@ -1,6 +1,5 @@
 import React from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import PublicLayout from './layouts/PublicLayout';
 import ProtectedRoute from './guards/ProtectedRoute';
 import RoleGate from './guards/RoleGate';
 
@@ -16,7 +15,7 @@ import SuperAdminDashboard from '../pages/SuperAdminDashboard.jsx';
 import CloseoutPage from '../pages/Cashier/CloseoutPage.jsx';
 // no hooks inside DashboardRoute to avoid hook-order issues on initial mounts
 import CoursesDashboard from '../pages/StudentParent/CoursesDashboard';
-import StubPage from '../pages/features/StubPage';
+import FeatureStub from '../components/ui/FeatureStub.jsx';
 import CalendarPage from '../pages/features/CalendarPage.jsx';
 import AnnouncementsPage from '../pages/features/AnnouncementsPage.jsx';
 import InvoicingEntitiesPage from '../pages/Admin/billing/InvoicingEntitiesPage';
@@ -36,6 +35,8 @@ import PaymentsPage from '../pages/billing/PaymentsPage.jsx'
 import PaymentsListPage from '../pages/payments/PaymentsListPage.jsx'
 import PaymentDetailPage from '../pages/payments/PaymentDetailPage.jsx'
 import ReportsPage from '../pages/billing/ReportsPage.jsx'
+import ParentInvoicesPage from '../pages/portal/ParentInvoicesPage.jsx';
+import ParentPaymentsPage from '../pages/portal/ParentPaymentsPage.jsx';
 
 export default function AppRouter() {
   return (
@@ -60,165 +61,140 @@ export default function AppRouter() {
       <Route path="/auth/register" element={<SignUpPage />} />
 
       {/* App routes - unified shell */}
-      <Route path="app" element={<AppShellLayout />}>
-        <Route index element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="activity" element={<StubPage title="Activity" />} />
+      <Route path="app" element={
+        <ProtectedRoute>
+          <AppShellLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="activity" element={<FeatureStub title="Activity" description="Activity feed is not available yet." />} />
         <Route path="announcements" element={<AnnouncementsPage />} />
         <Route path="courses" element={<CoursesDashboard />} />
-        <Route path="schedule" element={<StubPage title="Class Schedule" />} />
-        <Route path="tasks" element={<StubPage title="Tasks" />} />
-        <Route path="grades" element={<StubPage title="Grade Report" />} />
+        <Route path="schedule" element={<FeatureStub title="Class Schedule" description="Class schedule will appear here when available." />} />
+        <Route path="tasks" element={<FeatureStub title="Tasks" description="Tasks management is not available yet." />} />
+        <Route path="grades" element={<FeatureStub title="Grade Report" description="Grade report is not available yet." />} />
         <Route path="calendar" element={<CalendarPage />} />
-        <Route path="files" element={<StubPage title="Email & Files" />} />
-        <Route path="holds" element={<StubPage title="Holds" />} />
-        <Route path="activity" element={<StubPage title="Activity Feed" />} />
-        <Route path="alerts" element={<StubPage title="Alerts" />} />
+        <Route path="files" element={<FeatureStub title="Email & Files" description="Email and files integration is not available yet." />} />
+        <Route path="holds" element={<FeatureStub title="Holds" description="Holds visibility is not available yet." />} />
+        <Route path="activity" element={<FeatureStub title="Activity Feed" description="Activity feed is not available yet." />} />
+        <Route path="alerts" element={<FeatureStub title="Alerts" description="Alerts will appear here when available." />} />
         {/* Billing */}
         <Route path="billing">
           <Route path="invoices" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <InvoicesPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <InvoicesPage />
+            </RoleGate>
           } />
           <Route path="payments" element={
-            <ProtectedRoute>
-              <RoleGate allow={["cashier","admin","super_admin"]}>
-                <PaymentsListPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["cashier","admin","super_admin"]}>
+              <PaymentsListPage />
+            </RoleGate>
           } />
           <Route path="payments/:invoiceId" element={
-            <ProtectedRoute>
-              <RoleGate allow={["cashier","admin","super_admin"]}>
-                <PaymentDetailPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["cashier","admin","super_admin"]}>
+              <PaymentDetailPage />
+            </RoleGate>
           } />
           <Route path="cash-registers" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <CashRegistersPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <CashRegistersPage />
+            </RoleGate>
           } />
           <Route path="invoicing-entities" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <InvoicingEntitiesPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <InvoicingEntitiesPage />
+            </RoleGate>
           } />
           <Route path="reports" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <ReportsPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <ReportsPage />
+            </RoleGate>
           } />
         </Route>
         {/* Tools */}
         <Route path="tools">
-          <Route path="resources" element={<StubPage title="Resources" />} />
-          <Route path="academic" element={<StubPage title="Academic" />} />
-          <Route path="student-services" element={<StubPage title="Student Services" />} />
-          <Route path="employee-tools" element={<StubPage title="Employee Tools" />} />
+          <Route path="resources" element={<FeatureStub title="Resources" description="Resources will be listed here in a future release." />} />
+          <Route path="academic" element={<FeatureStub title="Academic" description="Academic tools are not available yet." />} />
+          <Route path="student-services" element={<FeatureStub title="Student Services" description="Student services are not available yet." />} />
+          <Route path="employee-tools" element={<FeatureStub title="Employee Tools" description="Employee tools are not available yet." />} />
         </Route>
         <Route path="events" element={<CalendarPage />} />
         
         <Route path="cashier/closeout" element={
+          <RoleGate allow={["cashier","admin","super_admin"]}>
+            <CloseoutPage />
+          </RoleGate>
+        } />
+        {/* Parent/Student portal */}
+        <Route path="portal/invoices" element={
           <ProtectedRoute>
-            <RoleGate allow={["cashier","admin","super_admin"]}>
-              <CloseoutPage />
+            <RoleGate allow={["student_parent"]}>
+              <ParentInvoicesPage />
+            </RoleGate>
+          </ProtectedRoute>
+        } />
+        <Route path="portal/payments" element={
+          <ProtectedRoute>
+            <RoleGate allow={["student_parent"]}>
+              <ParentPaymentsPage />
             </RoleGate>
           </ProtectedRoute>
         } />
         {/* People */}
         <Route path="people">
           <Route path="families" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <FamiliesPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <FamiliesPage />
+            </RoleGate>
           } />
           <Route path="students" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <StudentsPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <StudentsPage />
+            </RoleGate>
           } />
           <Route path="teachers" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <TeachersPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <TeachersPage />
+            </RoleGate>
           } />
           <Route path="employees" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <EmployeesPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <EmployeesPage />
+            </RoleGate>
           } />
           <Route path="roles" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <UsersRolesPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <UsersRolesPage />
+            </RoleGate>
           } />
         </Route>
 
         {/* Settings */}
         <Route path="settings">
           <Route path="org" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <OrgPreferencesPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <OrgPreferencesPage />
+            </RoleGate>
           } />
           <Route path="global" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <GlobalPreferencesPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <GlobalPreferencesPage />
+            </RoleGate>
           } />
           <Route path="emitter-cfdi" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <EmitterCFDIPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <EmitterCFDIPage />
+            </RoleGate>
           } />
           <Route path="flags" element={
-            <ProtectedRoute>
-              <RoleGate allow={["admin","super_admin"]}>
-                <AudienceFlagsPage />
-              </RoleGate>
-            </ProtectedRoute>
+            <RoleGate allow={["admin","super_admin"]}>
+              <AudienceFlagsPage />
+            </RoleGate>
           } />
         </Route>
         <Route path="cashier/panel" element={<CashierPanel />} />
-        <Route path="admin/reports" element={<StubPage title="Admin Reports" />} />
-        <Route path="admin/collections" element={<StubPage title="Collections" />} />
-        <Route path="admin/approvals" element={<StubPage title="Approvals" />} />
-        <Route path="admin/experiments" element={<StubPage title="Experiments" />} />
-        <Route path="admin/system-health" element={<StubPage title="System Health" />} />
+        {/** Admin experimental routes hidden for MVP */}
       </Route>
 
       {/* Catch all - redirect to home */}

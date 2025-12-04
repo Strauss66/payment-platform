@@ -343,3 +343,30 @@ export const Event = sequelize.define('events', {
 
 Calendar.hasMany(Event, { foreignKey: 'calendar_id', as: 'events' });
 Event.belongsTo(Calendar, { foreignKey: 'calendar_id', as: 'calendar' });
+
+// --- Families & Parents (for People module) ---
+export const Family = sequelize.define('families', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  code: { type: DataTypes.STRING(20), allowNull: false },
+  surname: { type: DataTypes.STRING(120), allowNull: false },
+  created_by: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
+  updated_by: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true }
+}, { tableName: 'families', underscored: true });
+
+export const Parent = sequelize.define('parents', {
+  id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
+  school_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  family_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  user_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
+  first_name: { type: DataTypes.STRING(120), allowNull: false },
+  last_name: { type: DataTypes.STRING(120), allowNull: false },
+  email: { type: DataTypes.STRING(191), allowNull: true },
+  phone: { type: DataTypes.STRING(32), allowNull: true },
+  is_primary_guardian: { type: DataTypes.TINYINT, allowNull: false, defaultValue: 0 },
+  created_by: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true },
+  updated_by: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true }
+}, { tableName: 'parents', underscored: true });
+
+Parent.belongsTo(Family, { foreignKey: 'family_id', as: 'family' });
+Family.hasMany(Parent, { foreignKey: 'family_id', as: 'parents' });

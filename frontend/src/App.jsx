@@ -4,7 +4,6 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { TenantProvider } from "./contexts/TenantContext";
 import BrandingProvider from "./components/BrandingProvider";
 import RoleAwareDashboardProvider from "./state/dashboard/RoleAwareDashboardProvider";
-import 'bootstrap/dist/css/bootstrap.min.css';
 import "./index.css"; // Ensure this line is present
 
 function App() {

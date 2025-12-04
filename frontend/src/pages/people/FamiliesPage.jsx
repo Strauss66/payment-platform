@@ -4,9 +4,10 @@ import { useTenant } from '../../contexts/TenantContext';
 import ProtectedRoute from '../../app/guards/ProtectedRoute';
 import RoleGate from '../../app/guards/RoleGate';
 import { ROLES } from '../../contexts/AuthContext';
-import { listFamilies } from '../../lib/api.billing';
+import { listFamilies, createFamily, updateFamily, deleteFamily } from '../../lib/api.billing';
 import Button from '../../components/ui/Button';
 import { Table, THead, TR, TD } from '../../components/ui/Table';
+import Modal from '../../components/ui/Modal.jsx';
 
 function useDebounced(value, ms){
   const [v, setV] = useState(value);
@@ -20,6 +21,9 @@ export default function FamiliesPage(){
   const [state, setState] = useState('idle');
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({ code: '', surname: '' });
 
   const q = searchParams.get('q') || '';
   const levelId = searchParams.get('levelId') || '';
@@ -49,7 +53,10 @@ export default function FamiliesPage(){
     <ProtectedRoute>
       <RoleGate allow={[ROLES.ADMIN, ROLES.SUPER_ADMIN]}>
         <div className="p-6">
-          <h1 className="text-xl font-semibold mb-4">Families</h1>
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-semibold">Families</h1>
+            <Button onClick={() => { setEditing(null); setForm({ code: '', surname: '' }); setShowModal(true); }}>Add Family</Button>
+          </div>
 
           {!currentSchoolId && (
             <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded">Select a school to continue.</div>
@@ -81,15 +88,15 @@ export default function FamiliesPage(){
           ) : rows.length === 0 ? (
             <Empty/>
           ) : (
-            <Table head={<THead sticky columns={[{label:'Family'}, {label:'Guardians'}, {label:'Students'}, {label:'Last Payment'}, {label:'Outstanding', right:true}, {label:'Actions'}]} />}>
+            <Table head={<THead sticky columns={[{label:'Code'}, {label:'Surname'}, {label:'Actions'}]} />}>
               {rows.map((r) => (
                 <TR key={r.id}>
-                  <TD>#{r.code || r.id}</TD>
-                  <TD>{Array.isArray(r.guardians)? r.guardians.map(g=>g.name).join(', ') : '-'}</TD>
-                  <TD>{Array.isArray(r.students)? r.students.length : (r.students_count ?? '-')}</TD>
-                  <TD>{r.last_payment_at ? new Date(r.last_payment_at).toLocaleDateString() : '-'}</TD>
-                  <TD right>${Number(r.outstanding ?? 0).toFixed(2)}</TD>
-                  <TD><button className="text-blue-600 underline text-sm">Open</button></TD>
+                  <TD>{r.code}</TD>
+                  <TD>{r.surname}</TD>
+                  <TD>
+                    <button className="text-blue-600 underline text-sm mr-2" onClick={()=>{ setEditing(r); setForm({ code: r.code || '', surname: r.surname || '' }); setShowModal(true); }}>Edit</button>
+                    <button className="text-red-600 underline text-sm" onClick={async()=>{ if (confirm('Delete family?')) { await deleteFamily(r.id); load(); } }}>Delete</button>
+                  </TD>
                 </TR>
               ))}
             </Table>
@@ -102,6 +109,13 @@ export default function FamiliesPage(){
               <Button variant="secondary" onClick={() => update('offset', offset + limit)} disabled={offset + limit >= total}>Next</Button>
             </div>
           </div>
+
+          <FamilyModal
+            open={showModal}
+            initial={editing}
+            onClose={() => setShowModal(false)}
+            onSaved={() => { setShowModal(false); load(); }}
+          />
         </div>
       </RoleGate>
     </ProtectedRoute>
@@ -135,4 +149,37 @@ function Empty(){
   );
 }
 
+function FamilyModal({ open, onClose, onSaved, initial }){
+  const [code, setCode] = useState(initial?.code || '');
+  const [surname, setSurname] = useState(initial?.surname || '');
+  const [saving, setSaving] = useState(false);
+  async function onSubmit(e){
+    e.preventDefault();
+    setSaving(true);
+    try {
+      if (initial?.id) await updateFamily(initial.id, { code, surname }); else await createFamily({ code, surname });
+      onSaved();
+    } finally { setSaving(false); }
+  }
+  useEffect(()=>{ setCode(initial?.code || ''); setSurname(initial?.surname || ''); }, [initial]);
+  if (!open) return null;
+  return (
+    <Modal onClose={onClose} title={initial?.id ? 'Edit Family' : 'Add Family'}>
+      <form onSubmit={onSubmit} className="space-y-3">
+        <div>
+          <label className="block text-sm mb-1">Code</label>
+          <input className="border rounded px-3 py-2 w-full" value={code} onChange={e=>setCode(e.target.value)} required />
+        </div>
+        <div>
+          <label className="block text-sm mb-1">Surname</label>
+          <input className="border rounded px-3 py-2 w-full" value={surname} onChange={e=>setSurname(e.target.value)} required />
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
 

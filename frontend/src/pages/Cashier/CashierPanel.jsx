@@ -6,6 +6,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import Button from '../../components/ui/Button';
 import { api } from '../../lib/apiClient';
 import { useToast } from '../../components/ui/Toast';
+import { listPayments } from '../../lib/api.billing';
 
 export default function CashierPanel(){
   const { currentSchoolId, needsSelection } = useTenant();
@@ -16,6 +17,8 @@ export default function CashierPanel(){
   const [studentId, setStudentId] = useState('');
   const [amount, setAmount] = useState('');
   const [methodId, setMethodId] = useState('');
+  const [todayPayments, setTodayPayments] = useState([]);
+  const [todayTotal, setTodayTotal] = useState(0);
 
   async function load(){
     if (!currentSchoolId) return;
@@ -29,6 +32,19 @@ export default function CashierPanel(){
   }
 
   useEffect(() => { if (currentSchoolId) load(); }, [currentSchoolId]);
+
+  useEffect(() => {
+    if (!currentSchoolId) return;
+    (async ()=>{
+      try {
+        const to = new Date(); const from = new Date(); from.setHours(0,0,0,0);
+        const { rows } = await listPayments({ from: from.toISOString(), to: to.toISOString(), limit: 50, sort: 'paid_at:desc' });
+        setTodayPayments(rows || []);
+        const total = (rows || []).reduce((s, r) => s + Number(r.amount || 0), 0);
+        setTodayTotal(total);
+      } catch {}
+    })();
+  }, [currentSchoolId, session]);
 
   const openSession = async (registerId) => {
     try {
@@ -125,12 +141,45 @@ export default function CashierPanel(){
                 </div>
                 <div className="text-sm text-gray-600 mt-2">Note: requires an open session. If none, you will be prompted.</div>
               </section>
+
+              <section>
+                <h2 className="font-medium mb-2">Today’s Payments</h2>
+                <div className="rounded border bg-white">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="text-left px-3 py-2">ID</th>
+                        <th className="text-left px-3 py-2">Method</th>
+                        <th className="text-left px-3 py-2">Amount</th>
+                        <th className="text-left px-3 py-2">Paid At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {todayPayments.map((p, idx) => (
+                        <tr key={p.id || idx} className={idx % 2 === 1 ? 'bg-gray-50/50' : ''}>
+                          <td className="px-3 py-2">{p.id}</td>
+                          <td className="px-3 py-2">{p.payment_method_id}</td>
+                          <td className="px-3 py-2">{formatMXN(p.amount)}</td>
+                          <td className="px-3 py-2">{p.paid_at ? new Date(p.paid_at).toLocaleString() : '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="px-3 py-2 flex justify-end text-sm text-gray-700">
+                    <div className="font-medium">Total Today: {formatMXN(todayTotal)}</div>
+                  </div>
+                </div>
+              </section>
             </div>
           )}
         </div>
       </RoleGate>
     </ProtectedRoute>
   );
+}
+
+function formatMXN(n){
+  try { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Number(n||0)); } catch { return `$${Number(n||0).toFixed(2)}`; }
 }
 
 

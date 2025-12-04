@@ -58,13 +58,32 @@ try {
 }
 
 // CORS Configuration
-app.use(
-  cors({
-    origin: "http://localhost:3000", // Allow frontend requests
-    methods: "GET,POST,PUT,DELETE",
-    allowedHeaders: "Content-Type,Authorization,X-School-Id",
-  })
-);
+const rawOrigins = process.env.CORS_ORIGIN || "http://localhost:3000";
+const allowedOrigins = rawOrigins.split(',').map(s => s.trim()).filter(Boolean);
+app.use(cors({
+  origin: function(origin, callback){
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Allow localhost variants in development
+    if (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
+    return callback(new Error('CORS not allowed'), false);
+  },
+  methods: "GET,POST,PUT,DELETE,OPTIONS",
+  allowedHeaders: "Content-Type,Authorization,X-School-Id",
+  credentials: false
+}));
+app.options('*', cors());
+
+// Basic HTTP request logging (minimal)
+if (process.env.NODE_ENV !== 'test') {
+  app.use((req, _res, next) => {
+    try {
+      const ts = new Date().toISOString();
+      console.log(`[${ts}] ${req.method} ${req.originalUrl}`);
+    } catch {}
+    next();
+  });
+}
 
 // Middleware
 app.use(express.json());
@@ -171,10 +190,18 @@ async function startServer() {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error("❌ Internal Server Error:", err);
-  res.status(500).json({ 
-    message: "Internal server error", 
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  const status = Number(err?.status || err?.statusCode || 500);
+  const code = err?.code || 'INTERNAL_ERROR';
+  const msg = err?.message || 'Internal server error';
+  if (status >= 500) {
+    console.error("❌ Internal Server Error:", err);
+  } else {
+    console.warn(`⚠️  Error ${status} [${code}]:`, msg);
+  }
+  res.status(status).json({ 
+    message: msg,
+    code,
+    ...(process.env.NODE_ENV === 'development' ? { stack: err?.stack } : {})
   });
 });
 

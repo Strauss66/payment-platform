@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { requireSameSchool } from '../middleware/tenancy.js';
 import { ROLES } from '../utils/roles.js';
-import { Invoice, Student, User, Enrollment, Announcement } from '../models/index.js';
+import { Invoice, Payment, Student, User, Enrollment, Announcement } from '../models/index.js';
 import { computeLateFee } from '../services/billing/lateFee.js';
 
 const r = Router();
@@ -217,3 +217,77 @@ r.get('/announcements', requireAuth, requireSameSchool, async (req, res) => {
 });
 
 export default r;
+
+// --- Additional MVP endpoints for parent/student portal ---
+// GET /api/portal/summary - aggregate balance and next due for authorized students
+r.get('/summary', requireAuth, requireSameSchool, async (req, res) => {
+  try {
+    const schoolId = Number(req.user.school_id);
+    const roles = req.user?.roles || [];
+    const isPrivileged = roles.includes(ROLES.ADMIN) || roles.includes(ROLES.CASHIER) || roles.includes('admin') || roles.includes('cashier');
+    if (isPrivileged) return res.status(403).json({ message: 'Forbidden' });
+
+    const my = [];
+    const self = await Student.findOne({ where: { school_id: schoolId, user_id: req.user.id } });
+    if (self) my.push(self);
+    const all = await Student.findAll({ where: { school_id: schoolId } });
+    for (const s of all) {
+      const ok = await isParentAuthorizedForStudent(req.user, s);
+      if (ok) my.push(s);
+    }
+    const uniq = Array.from(new Map(my.map(s => [s.id, s])).values());
+    if (!uniq.length) return res.json({ total_balance: 0, next_due_date: null, next_due_amount: 0 });
+
+    const ids = uniq.map(s => s.id);
+    const invoices = await Invoice.findAll({ where: { school_id: schoolId, student_id: ids } });
+    let total_balance = 0;
+    let next_due_date = null;
+    let next_due_amount = 0;
+    for (const inv of invoices) {
+      const bal = Number(inv.balance || 0);
+      total_balance += bal;
+      if (bal > 0 && inv.due_date) {
+        const d = new Date(inv.due_date);
+        if (!next_due_date || d < new Date(next_due_date)) {
+          next_due_date = d.toISOString();
+          next_due_amount = bal;
+        }
+      }
+    }
+    return res.json({ total_balance: Number(total_balance.toFixed(2)), next_due_date, next_due_amount: Number(next_due_amount.toFixed(2)) });
+  } catch (e) {
+    console.error('portal/summary failed', e);
+    return res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+// GET /api/portal/payments - list payments for authorized students
+r.get('/payments', requireAuth, requireSameSchool, async (req, res) => {
+  try {
+    const schoolId = Number(req.user.school_id);
+    const roles = req.user?.roles || [];
+    const isPrivileged = roles.includes(ROLES.ADMIN) || roles.includes(ROLES.CASHIER) || roles.includes('admin') || roles.includes('cashier');
+    if (isPrivileged) return res.status(403).json({ message: 'Forbidden' });
+
+    const allStudents = await Student.findAll({ where: { school_id: schoolId } });
+    const allowed = [];
+    const self = await Student.findOne({ where: { school_id: schoolId, user_id: req.user.id } });
+    if (self) allowed.push(self.id);
+    for (const s of allStudents) {
+      const ok = await isParentAuthorizedForStudent(req.user, s);
+      if (ok) allowed.push(s.id);
+    }
+    const uniqIds = Array.from(new Set(allowed));
+    if (!uniqIds.length) return res.json({ rows: [], count: 0 });
+
+    // get invoices for allowed students, then their payments
+    const invoices = await Invoice.findAll({ where: { school_id: schoolId, student_id: uniqIds } });
+    const invIds = invoices.map(i => i.id);
+    if (!invIds.length) return res.json({ rows: [], count: 0 });
+    const rows = await Payment.findAll({ where: { school_id: schoolId, invoice_id: invIds }, order: [['paid_at','DESC']] });
+    return res.json({ rows, count: rows.length });
+  } catch (e) {
+    console.error('portal/payments failed', e);
+    return res.status(500).json({ message: 'Internal error' });
+  }
+});
