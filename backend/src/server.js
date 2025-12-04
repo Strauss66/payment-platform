@@ -61,8 +61,6 @@ try {
 const rawOrigins = process.env.CORS_ORIGIN || "http://localhost:3000";
 const allowedOrigins = rawOrigins.split(',').map(s => s.trim()).filter(Boolean);
 
-app.options('*', cors());
-
 // Basic HTTP request logging (minimal)
 if (process.env.NODE_ENV !== 'test') {
   app.use((req, _res, next) => {
@@ -91,12 +89,9 @@ const mergedDirectives = { ...defaultDirectives, 'img-src': IMG_SOURCES };
 app.use(helmet({ contentSecurityPolicy: { directives: mergedDirectives } }));
 // Tenancy context after auth is parsed in route-level; for global routes, we apply per-router
 
-// Serve React frontend in production
+// Serve React frontend in production (static files only; SPA fallback handled by Nginx)
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/build")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/build", "index.html"));
-  });
 }
 
 
