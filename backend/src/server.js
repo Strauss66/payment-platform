@@ -89,6 +89,9 @@ const mergedDirectives = { ...defaultDirectives, 'img-src': IMG_SOURCES };
 app.use(helmet({ contentSecurityPolicy: { directives: mergedDirectives } }));
 // Tenancy context after auth is parsed in route-level; for global routes, we apply per-router
 
+// Health route (public) - mount before 404/error handlers
+app.use("/api/health", healthRoutes);
+
 // Serve React frontend in production (static files only; SPA fallback handled by Nginx)
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/build")));
@@ -132,7 +135,17 @@ app.use((req, res, next) => {
 
 // Central error handler should remain last
 app.use((err, req, res, next) => {
-  // your existing error handler code
+  const status = err?.status || err?.code || 500;
+  if (status >= 500) {
+    console.error(err);
+  }
+  if (process.env.NODE_ENV === "production") {
+    return res.status(status).json({ message: err?.message || "Server error" });
+  }
+  return res.status(status).json({
+    message: err?.message || "Server error",
+    stack: err?.stack,
+  });
 });
 
 

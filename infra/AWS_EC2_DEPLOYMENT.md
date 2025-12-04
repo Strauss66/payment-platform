@@ -31,6 +31,20 @@ git clone <YOUR_REPO_URL> .
 REACT_APP_API_URL=https://your-domain.com/api
 REACT_APP_MEDIA_BASE_URL=https://your-domain.com/media
 REACT_APP_ALLOW_SCHOOL_SWITCH=false
+
+NODE_ENV=production
+PORT=5001
+JWT_SECRET=Dude8866?
+CROSS_ENV=1
+CORS_LABELS= restful parted stuff // typically just CORS _ origin fudge fudge.
+CORS_ORIGIN=https://your-domain.com
+DB_HOST=school-platform-test.cz2motexidos.us-east-1.rds.amazonaws.com
+DB_PORT=3306
+DB_NAME=school_platform
+DB_USER=root
+DB_PASSWORD=asliEGDSA8809-jdf78_del
+EOF
+
 ```
 
 ## 4) Build

@@ -33,17 +33,17 @@ export default function CloseoutPage(){
 
       {state === 'error' && <InlineError retry={() => window.location.reload()} />}
 
-      <div className="border rounded p-3">
+          <div className="border rounded p-3">
         <div className="text-sm text-gray-600 mb-2">Today’s Payments</div>
-        <table className="w-full text-sm">
-          <thead><tr><th className="text-left">ID</th><th className="text-left">Method</th><th className="text-left">Amount</th><th className="text-left">Paid At</th></tr></thead>
-          <tbody>
+          <table className="w-full text-sm">
+            <thead><tr><th className="text-left">ID</th><th className="text-left">Method</th><th className="text-left">Amount</th><th className="text-left">Paid At</th></tr></thead>
+            <tbody>
             {payments.map(l => (
               <tr key={l.id}><td>{l.id}</td><td>{l.payment_method_id}</td><td>{formatMXN(l.amount)}</td><td>{l.paid_at ? new Date(l.paid_at).toLocaleString() : '-'}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
     </div>
   );
 }

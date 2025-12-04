@@ -88,15 +88,15 @@ r.post('/', requireAuth, requireRoles('admin','cashier'), requireSameSchool, asy
     if (sessionId) {
       const s = await CashSession.findByPk(sessionId);
       if (!s || Number(s.school_id) !== Number(schoolId) || s.closed_at) {
-        return res.status(400).json({ message: 'Invalid or closed cash session' });
-      }
-    } else {
+      return res.status(400).json({ message: 'Invalid or closed cash session' });
+    }
+  } else {
       const s = await CashSession.findOne({ where: { school_id: schoolId, opened_by: userId, closed_at: null } });
       if (!s) {
-        return res.status(400).json({ message: 'Open cash session required' });
-      }
-      sessionId = s.id;
+      return res.status(400).json({ message: 'Open cash session required' });
     }
+      sessionId = s.id;
+  }
 
     const result = await PaymentService.postPayment({
       school_id: schoolId,

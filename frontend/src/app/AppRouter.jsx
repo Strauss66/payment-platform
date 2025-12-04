@@ -62,9 +62,9 @@ export default function AppRouter() {
 
       {/* App routes - unified shell */}
       <Route path="app" element={
-        <ProtectedRoute>
+          <ProtectedRoute>
           <AppShellLayout />
-        </ProtectedRoute>
+          </ProtectedRoute>
       }>
         <Route index element={<Dashboard />} />
         <Route path="dashboard" element={<Dashboard />} />
@@ -82,34 +82,34 @@ export default function AppRouter() {
         {/* Billing */}
         <Route path="billing">
           <Route path="invoices" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <InvoicesPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <InvoicesPage />
+              </RoleGate>
           } />
           <Route path="payments" element={
-            <RoleGate allow={["cashier","admin","super_admin"]}>
-              <PaymentsListPage />
-            </RoleGate>
+              <RoleGate allow={["cashier","admin","super_admin"]}>
+                <PaymentsListPage />
+              </RoleGate>
           } />
           <Route path="payments/:invoiceId" element={
-            <RoleGate allow={["cashier","admin","super_admin"]}>
-              <PaymentDetailPage />
-            </RoleGate>
+              <RoleGate allow={["cashier","admin","super_admin"]}>
+                <PaymentDetailPage />
+              </RoleGate>
           } />
           <Route path="cash-registers" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <CashRegistersPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <CashRegistersPage />
+              </RoleGate>
           } />
           <Route path="invoicing-entities" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <InvoicingEntitiesPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <InvoicingEntitiesPage />
+              </RoleGate>
           } />
           <Route path="reports" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <ReportsPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <ReportsPage />
+              </RoleGate>
           } />
         </Route>
         {/* Tools */}
@@ -144,53 +144,53 @@ export default function AppRouter() {
         {/* People */}
         <Route path="people">
           <Route path="families" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <FamiliesPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <FamiliesPage />
+              </RoleGate>
           } />
           <Route path="students" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <StudentsPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <StudentsPage />
+              </RoleGate>
           } />
           <Route path="teachers" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <TeachersPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <TeachersPage />
+              </RoleGate>
           } />
           <Route path="employees" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <EmployeesPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <EmployeesPage />
+              </RoleGate>
           } />
           <Route path="roles" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <UsersRolesPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <UsersRolesPage />
+              </RoleGate>
           } />
         </Route>
 
         {/* Settings */}
         <Route path="settings">
           <Route path="org" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <OrgPreferencesPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <OrgPreferencesPage />
+              </RoleGate>
           } />
           <Route path="global" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <GlobalPreferencesPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <GlobalPreferencesPage />
+              </RoleGate>
           } />
           <Route path="emitter-cfdi" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <EmitterCFDIPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <EmitterCFDIPage />
+              </RoleGate>
           } />
           <Route path="flags" element={
-            <RoleGate allow={["admin","super_admin"]}>
-              <AudienceFlagsPage />
-            </RoleGate>
+              <RoleGate allow={["admin","super_admin"]}>
+                <AudienceFlagsPage />
+              </RoleGate>
           } />
         </Route>
         <Route path="cashier/panel" element={<CashierPanel />} />

@@ -14,14 +14,14 @@ export default function CashierPaymentsByMethod(){
       {data.length === 0 ? (
         <div className="text-sm text-gray-600">No data</div>
       ) : (
-        <ul className="text-sm">
+      <ul className="text-sm">
           {data.map((r, idx) => (
             <li key={idx} className="flex justify-between">
               <span>{labelForMethod(r.payment_method_id)}</span>
               <span>{formatMXN(r.total_amount)}</span>
             </li>
-          ))}
-        </ul>
+        ))}
+      </ul>
       )}
     </div>
   );
