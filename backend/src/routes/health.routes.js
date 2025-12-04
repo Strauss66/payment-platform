@@ -1,26 +1,27 @@
-import express from 'express';
-import { sequelize } from '../config/db.js';
+import express from "express";
+import { sequelize } from "../config/db.js";
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   const time = new Date().toISOString();
-  const version = process.env.APP_VERSION || 'dev';
+  const version = process.env.APP_VERSION || "dev";
+
   try {
     await sequelize.authenticate();
-    return res.json({
-      status: 'ok',
+    return res.status(200).json({
+      status: "ok",
       time,
       version,
-      db: 'ok'
+      db: "ok",
     });
   } catch (err) {
     return res.status(500).json({
-      status: 'error',
+      status: "error",
       time,
       version,
-      db: 'error',
-      error: 'Database check failed'
+      db: "error",
+      error: "Database check failed",
     });
   }
 });

@@ -11,3 +11,15 @@ Logins:
 Notes:
 - Non-superadmin always uses their default school; no switching.
 - Superadmin may switch only if REACT_APP_ALLOW_SCHOOL_SWITCH=true; otherwise defaults to their default school.
+
+
+export NODE_ENV=production
+export DB_HOST='school-platform-test.cz2motexidos.us-east-1.rds.amazonaws.com'
+export DB_PORT=3306
+export DB_NAME='school_platform_test'
+export DB_USER='root'
+export DB_PASSWORD='asliEGDSA8809-jdf78_del'
+export JWT_SECRET='Dude8866?'
+export CORS_ORIGIN='http://localhost:3000'
+export PORT=5001
+npm run start:prod
