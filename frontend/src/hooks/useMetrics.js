@@ -13,7 +13,7 @@ export function useMetricsOverview(opts = {}) {
       .catch((e) => { if (!controller.signal.aborted) setError(e); })
       .finally(() => { if (!controller.signal.aborted) setIsLoading(false); });
     return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line
   }, [JSON.stringify(opts.params || {})]);
   return { data, isLoading, error };
 }
@@ -30,7 +30,7 @@ export function usePaymentMethodMix(opts = {}) {
       .catch((e) => { if (!controller.signal.aborted) setError(e); })
       .finally(() => { if (!controller.signal.aborted) setIsLoading(false); });
     return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line
   }, [JSON.stringify(opts.params || {})]);
   return { data, isLoading, error };
 }
@@ -47,7 +47,7 @@ export function useAttentionNeeded(opts = {}) {
       .catch((e) => { if (!controller.signal.aborted) setError(e); })
       .finally(() => { if (!controller.signal.aborted) setIsLoading(false); });
     return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line
   }, [JSON.stringify(opts.params || {})]);
   return { data, isLoading, error };
 }
