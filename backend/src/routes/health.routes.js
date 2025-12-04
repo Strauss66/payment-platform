@@ -1,4 +1,5 @@
 import express from "express";
+
 import { sequelize } from "../config/db.js";
 
 const router = express.Router();
